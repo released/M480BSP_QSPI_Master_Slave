@@ -13,9 +13,9 @@ use QSPI DMA interrupt to performace master and slave transmit
 
 - PA4 : QSPI0_MOSI1 , PA5 : QSPI0_MISO1 , 
 
-- In KeilC project define ENABLE_QSPI_MASTER , ENABLE_QSPI_SLAVE , use M487 EVM x 2 for QSPI master and slave
+In KeilC project define ENABLE_QSPI_MASTER , ENABLE_QSPI_SLAVE , use M487 EVM x 2 for QSPI master and slave
 
-- under QSPI_TX in QSPI_Master_PDMA_Enable and QSPI_Slave_PDMA_Enable function , to change TX data
+under QSPI_TX in QSPI_Master_PDMA_Enable and QSPI_Slave_PDMA_Enable function , to change TX data
 
 Master TX buffer : g_au8MasterToSlaveTestPattern
 
