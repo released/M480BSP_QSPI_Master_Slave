@@ -19,4 +19,4 @@ Master RX buffer : g_au8MasterRxBuffer
 
 Slave RX buffer : g_au8SlaveRxBuffer
 
-![image](https://github.com/released/D:\SourceCode\_Avery_M480\M480BSP_QSPI_Master_Slave/blob/master/scope_bit_High_Low.jpg)
+![image](https://github.com/released/M480BSP_QSPI_Master_Slave/blob/master/SampleCode/Template/Buffer_Transmit.jpg)
