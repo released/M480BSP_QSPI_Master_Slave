@@ -5,30 +5,30 @@
                           AREA ||i.LED_Init||, CODE, READONLY, ALIGN=2
 
                   LED_Init PROC
-;;;462    
-;;;463    void LED_Init(void)
+;;;471    
+;;;472    void LED_Init(void)
 000000  b510              PUSH     {r4,lr}
-;;;464    {
-;;;465    	GPIO_SetMode(PH,BIT0,GPIO_MODE_OUTPUT);
+;;;473    {
+;;;474    	GPIO_SetMode(PH,BIT0,GPIO_MODE_OUTPUT);
 000002  4c09              LDR      r4,|L1.40|
 000004  2201              MOVS     r2,#1
 000006  4611              MOV      r1,r2
 000008  4620              MOV      r0,r4
 00000a  f7fffffe          BL       GPIO_SetMode
-;;;466    	GPIO_SetMode(PH,BIT1,GPIO_MODE_OUTPUT);
+;;;475    	GPIO_SetMode(PH,BIT1,GPIO_MODE_OUTPUT);
 00000e  2201              MOVS     r2,#1
 000010  2102              MOVS     r1,#2
 000012  4620              MOV      r0,r4
 000014  f7fffffe          BL       GPIO_SetMode
-;;;467    	GPIO_SetMode(PH,BIT2,GPIO_MODE_OUTPUT);
+;;;476    	GPIO_SetMode(PH,BIT2,GPIO_MODE_OUTPUT);
 000018  4620              MOV      r0,r4
 00001a  2201              MOVS     r2,#1
 00001c  e8bd4010          POP      {r4,lr}
 000020  2104              MOVS     r1,#4
 000022  f7ffbffe          B.W      GPIO_SetMode
-;;;468    	
-;;;469    }
-;;;470    
+;;;477    	
+;;;478    }
+;;;479    
                           ENDP
 
 000026  0000              DCW      0x0000
@@ -58,157 +58,157 @@
                           AREA ||i.PDMA_IRQHandler||, CODE, READONLY, ALIGN=2
 
                   PDMA_IRQHandler PROC
-;;;319    
-;;;320    void PDMA_IRQHandler(void)
+;;;328    
+;;;329    void PDMA_IRQHandler(void)
 000000  491b              LDR      r1,|L3.112|
-;;;321    {
+;;;330    {
 000002  b510              PUSH     {r4,lr}
-;;;322    	#if defined (ENABLE_QSPI_MASTER)	
-;;;323        uint32_t status = PDMA_GET_INT_STATUS(PDMA);
+;;;331    	#if defined (ENABLE_QSPI_MASTER)	
+;;;332        uint32_t status = PDMA_GET_INT_STATUS(PDMA);
 000004  6808              LDR      r0,[r1,#0]
-;;;324    	
-;;;325        if (status & PDMA_INTSTS_ABTIF_Msk)   /* abort */
+;;;333    	
+;;;334        if (status & PDMA_INTSTS_ABTIF_Msk)   /* abort */
 000006  07c2              LSLS     r2,r0,#31
 000008  d003              BEQ      |L3.18|
-;;;326        {
-;;;327    		#if 1
-;;;328            PDMA_CLR_ABORT_FLAG(PDMA, PDMA_GET_ABORT_STS(PDMA));
+;;;335        {
+;;;336    		#if 1
+;;;337            PDMA_CLR_ABORT_FLAG(PDMA, PDMA_GET_ABORT_STS(PDMA));
 00000a  1d08              ADDS     r0,r1,#4
 00000c  6801              LDR      r1,[r0,#0]
 00000e  6001              STR      r1,[r0,#0]
                   |L3.16|
-;;;329    		#else
-;;;330            if (PDMA_GET_ABORT_STS(PDMA) & (1 << QSPI_MASTER_TX_DMA_CH))
-;;;331            {
-;;;332    
-;;;333            }
-;;;334            PDMA_CLR_ABORT_FLAG(PDMA, (1 << QSPI_MASTER_TX_DMA_CH));
-;;;335    
-;;;336            if (PDMA_GET_ABORT_STS(PDMA) & (1 << QSPI_MASTER_RX_DMA_CH))
-;;;337            {
-;;;338    
-;;;339            }
-;;;340            PDMA_CLR_ABORT_FLAG(PDMA, (1 << QSPI_MASTER_RX_DMA_CH));
-;;;341    		#endif
-;;;342        }
-;;;343        else if (status & PDMA_INTSTS_TDIF_Msk)     /* done */
-;;;344        {
-;;;345            if((PDMA_GET_TD_STS(PDMA) & QSPI_MASTER_OPENED_CH) == QSPI_MASTER_OPENED_CH)
+;;;338    		#else
+;;;339            if (PDMA_GET_ABORT_STS(PDMA) & (1 << QSPI_MASTER_TX_DMA_CH))
+;;;340            {
+;;;341    
+;;;342            }
+;;;343            PDMA_CLR_ABORT_FLAG(PDMA, (1 << QSPI_MASTER_TX_DMA_CH));
+;;;344    
+;;;345            if (PDMA_GET_ABORT_STS(PDMA) & (1 << QSPI_MASTER_RX_DMA_CH))
 ;;;346            {
-;;;347                /* Clear PDMA transfer done interrupt flag */
-;;;348                PDMA_CLR_TD_FLAG(PDMA, QSPI_MASTER_OPENED_CH);
-;;;349    
-;;;350    			//insert process
-;;;351    			QSPI_DISABLE_TX_PDMA(QSPI0);
-;;;352    			QSPI_DISABLE_RX_PDMA(QSPI0);
-;;;353    			LED_Y ^= 1;
-;;;354    			QSPI_Master_PDMA_Enable(QSPI_TX);
-;;;355    			QSPI_Master_PDMA_Enable(QSPI_RX);
-;;;356            }        		
-;;;357        }
-;;;358        else if (status & (PDMA_INTSTS_REQTOF0_Msk | PDMA_INTSTS_REQTOF1_Msk))     /* Check the DMA time-out interrupt flag */
-;;;359        {
-;;;360    		LED_G ^= 1;
-;;;361            PDMA_CLR_TMOUT_FLAG(PDMA,QSPI_MASTER_TX_DMA_CH);
-;;;362            PDMA_CLR_TMOUT_FLAG(PDMA,QSPI_MASTER_RX_DMA_CH);
-;;;363        }
-;;;364        else
-;;;365        {
-;;;366    
-;;;367        }
-;;;368    
-;;;369    	#elif defined (ENABLE_QSPI_SLAVE)
-;;;370        uint32_t status = PDMA_GET_INT_STATUS(PDMA);
-;;;371    	
-;;;372        if (status & PDMA_INTSTS_ABTIF_Msk)   /* abort */
-;;;373        {
-;;;374    		#if 1
-;;;375            PDMA_CLR_ABORT_FLAG(PDMA, PDMA_GET_ABORT_STS(PDMA));
-;;;376    		#else
-;;;377            if (PDMA_GET_ABORT_STS(PDMA) & (1 << QSPI_SLAVE_TX_DMA_CH))
-;;;378            {
-;;;379    
-;;;380            }
-;;;381            PDMA_CLR_ABORT_FLAG(PDMA, (1 << QSPI_SLAVE_TX_DMA_CH));
-;;;382    
-;;;383            if (PDMA_GET_ABORT_STS(PDMA) & (1 << QSPI_SLAVE_RX_DMA_CH))
-;;;384            {
-;;;385    
-;;;386            }
-;;;387            PDMA_CLR_ABORT_FLAG(PDMA, (1 << QSPI_SLAVE_RX_DMA_CH));
-;;;388    		#endif
-;;;389        }
-;;;390        else if (status & PDMA_INTSTS_TDIF_Msk)     /* done */
-;;;391        {
-;;;392            if((PDMA_GET_TD_STS(PDMA) & QSPI_SLAVE_OPENED_CH) == QSPI_SLAVE_OPENED_CH)
+;;;347    
+;;;348            }
+;;;349            PDMA_CLR_ABORT_FLAG(PDMA, (1 << QSPI_MASTER_RX_DMA_CH));
+;;;350    		#endif
+;;;351        }
+;;;352        else if (status & PDMA_INTSTS_TDIF_Msk)     /* done */
+;;;353        {
+;;;354            if((PDMA_GET_TD_STS(PDMA) & QSPI_MASTER_OPENED_CH) == QSPI_MASTER_OPENED_CH)
+;;;355            {
+;;;356                /* Clear PDMA transfer done interrupt flag */
+;;;357                PDMA_CLR_TD_FLAG(PDMA, QSPI_MASTER_OPENED_CH);
+;;;358    
+;;;359    			//insert process
+;;;360    			QSPI_DISABLE_TX_PDMA(QSPI0);
+;;;361    			QSPI_DISABLE_RX_PDMA(QSPI0);
+;;;362    			LED_Y ^= 1;
+;;;363    			QSPI_Master_PDMA_Enable(QSPI_TX);
+;;;364    			QSPI_Master_PDMA_Enable(QSPI_RX);
+;;;365            }        		
+;;;366        }
+;;;367        else if (status & (PDMA_INTSTS_REQTOF0_Msk | PDMA_INTSTS_REQTOF1_Msk))     /* Check the DMA time-out interrupt flag */
+;;;368        {
+;;;369    		LED_G ^= 1;
+;;;370            PDMA_CLR_TMOUT_FLAG(PDMA,QSPI_MASTER_TX_DMA_CH);
+;;;371            PDMA_CLR_TMOUT_FLAG(PDMA,QSPI_MASTER_RX_DMA_CH);
+;;;372        }
+;;;373        else
+;;;374        {
+;;;375    
+;;;376        }
+;;;377    
+;;;378    	#elif defined (ENABLE_QSPI_SLAVE)
+;;;379        uint32_t status = PDMA_GET_INT_STATUS(PDMA);
+;;;380    	
+;;;381        if (status & PDMA_INTSTS_ABTIF_Msk)   /* abort */
+;;;382        {
+;;;383    		#if 1
+;;;384            PDMA_CLR_ABORT_FLAG(PDMA, PDMA_GET_ABORT_STS(PDMA));
+;;;385    		#else
+;;;386            if (PDMA_GET_ABORT_STS(PDMA) & (1 << QSPI_SLAVE_TX_DMA_CH))
+;;;387            {
+;;;388    
+;;;389            }
+;;;390            PDMA_CLR_ABORT_FLAG(PDMA, (1 << QSPI_SLAVE_TX_DMA_CH));
+;;;391    
+;;;392            if (PDMA_GET_ABORT_STS(PDMA) & (1 << QSPI_SLAVE_RX_DMA_CH))
 ;;;393            {
-;;;394                /* Clear PDMA transfer done interrupt flag */
-;;;395                PDMA_CLR_TD_FLAG(PDMA, QSPI_SLAVE_OPENED_CH);
-;;;396    
-;;;397    			//insert process
-;;;398    			QSPI_DISABLE_TX_PDMA(QSPI0);
-;;;399    			QSPI_DISABLE_RX_PDMA(QSPI0);			
-;;;400    			LED_Y ^= 1;
-;;;401    			QSPI_Slave_PDMA_Enable(QSPI_TX);
-;;;402    			QSPI_Slave_PDMA_Enable(QSPI_RX);			
-;;;403            }        		
-;;;404        }
-;;;405        else if (status & (PDMA_INTSTS_REQTOF0_Msk | PDMA_INTSTS_REQTOF1_Msk))     /* Check the DMA time-out interrupt flag */
-;;;406        {
-;;;407    		LED_G ^= 1;
-;;;408            PDMA_CLR_TMOUT_FLAG(PDMA,QSPI_SLAVE_TX_DMA_CH);
-;;;409            PDMA_CLR_TMOUT_FLAG(PDMA,QSPI_SLAVE_RX_DMA_CH);
-;;;410        }
-;;;411        else
-;;;412        {
-;;;413    
-;;;414        }
-;;;415    
-;;;416    	#endif
-;;;417    	
-;;;418    }
+;;;394    
+;;;395            }
+;;;396            PDMA_CLR_ABORT_FLAG(PDMA, (1 << QSPI_SLAVE_RX_DMA_CH));
+;;;397    		#endif
+;;;398        }
+;;;399        else if (status & PDMA_INTSTS_TDIF_Msk)     /* done */
+;;;400        {
+;;;401            if((PDMA_GET_TD_STS(PDMA) & QSPI_SLAVE_OPENED_CH) == QSPI_SLAVE_OPENED_CH)
+;;;402            {
+;;;403                /* Clear PDMA transfer done interrupt flag */
+;;;404                PDMA_CLR_TD_FLAG(PDMA, QSPI_SLAVE_OPENED_CH);
+;;;405    
+;;;406    			//insert process
+;;;407    			QSPI_DISABLE_TX_PDMA(QSPI0);
+;;;408    			QSPI_DISABLE_RX_PDMA(QSPI0);			
+;;;409    			LED_Y ^= 1;
+;;;410    			QSPI_Slave_PDMA_Enable(QSPI_TX);
+;;;411    			QSPI_Slave_PDMA_Enable(QSPI_RX);			
+;;;412            }        		
+;;;413        }
+;;;414        else if (status & (PDMA_INTSTS_REQTOF0_Msk | PDMA_INTSTS_REQTOF1_Msk))     /* Check the DMA time-out interrupt flag */
+;;;415        {
+;;;416    		LED_G ^= 1;
+;;;417            PDMA_CLR_TMOUT_FLAG(PDMA,QSPI_SLAVE_TX_DMA_CH);
+;;;418            PDMA_CLR_TMOUT_FLAG(PDMA,QSPI_SLAVE_RX_DMA_CH);
+;;;419        }
+;;;420        else
+;;;421        {
+;;;422    
+;;;423        }
+;;;424    
+;;;425    	#endif
+;;;426    	
+;;;427    }
 000010  bd10              POP      {r4,pc}
                   |L3.18|
-000012  0782              LSLS     r2,r0,#30             ;343
+000012  0782              LSLS     r2,r0,#30             ;352
 000014  d51d              BPL      |L3.82|
 000016  4816              LDR      r0,|L3.112|
-000018  3008              ADDS     r0,r0,#8              ;345
-00001a  6801              LDR      r1,[r0,#0]            ;345
-00001c  43c9              MVNS     r1,r1                 ;345
-00001e  0789              LSLS     r1,r1,#30             ;345
+000018  3008              ADDS     r0,r0,#8              ;354
+00001a  6801              LDR      r1,[r0,#0]            ;354
+00001c  43c9              MVNS     r1,r1                 ;354
+00001e  0789              LSLS     r1,r1,#30             ;354
 000020  d1f6              BNE      |L3.16|
-000022  2103              MOVS     r1,#3                 ;348
-000024  6001              STR      r1,[r0,#0]            ;348
+000022  2103              MOVS     r1,#3                 ;357
+000024  6001              STR      r1,[r0,#0]            ;357
 000026  4813              LDR      r0,|L3.116|
-000028  68c1              LDR      r1,[r0,#0xc]          ;351
-00002a  f0210101          BIC      r1,r1,#1              ;351
-00002e  60c1              STR      r1,[r0,#0xc]          ;351
-000030  68c1              LDR      r1,[r0,#0xc]          ;352
-000032  f0210102          BIC      r1,r1,#2              ;352
-000036  60c1              STR      r1,[r0,#0xc]          ;352
+000028  68c1              LDR      r1,[r0,#0xc]          ;360
+00002a  f0210101          BIC      r1,r1,#1              ;360
+00002e  60c1              STR      r1,[r0,#0xc]          ;360
+000030  68c1              LDR      r1,[r0,#0xc]          ;361
+000032  f0210102          BIC      r1,r1,#2              ;361
+000036  60c1              STR      r1,[r0,#0xc]          ;361
 000038  480f              LDR      r0,|L3.120|
-00003a  6801              LDR      r1,[r0,#0]            ;353
-00003c  f0810101          EOR      r1,r1,#1              ;353
-000040  6001              STR      r1,[r0,#0]            ;353
-000042  2000              MOVS     r0,#0                 ;354
+00003a  6801              LDR      r1,[r0,#0]            ;362
+00003c  f0810101          EOR      r1,r1,#1              ;362
+000040  6001              STR      r1,[r0,#0]            ;362
+000042  2000              MOVS     r0,#0                 ;363
 000044  f7fffffe          BL       QSPI_Master_PDMA_Enable
-000048  e8bd4010          POP      {r4,lr}               ;355
-00004c  2001              MOVS     r0,#1                 ;355
+000048  e8bd4010          POP      {r4,lr}               ;364
+00004c  2001              MOVS     r0,#1                 ;364
 00004e  f7ffbffe          B.W      QSPI_Master_PDMA_Enable
                   |L3.82|
-000052  f4107f40          TST      r0,#0x300             ;358
+000052  f4107f40          TST      r0,#0x300             ;367
 000056  d0db              BEQ      |L3.16|
 000058  4807              LDR      r0,|L3.120|
-00005a  1d00              ADDS     r0,r0,#4              ;360
-00005c  6802              LDR      r2,[r0,#0]            ;360
-00005e  f0820201          EOR      r2,r2,#1              ;360
-000062  6002              STR      r2,[r0,#0]            ;360
-000064  1580              ASRS     r0,r0,#22             ;361
-000066  6008              STR      r0,[r1,#0]            ;361
-000068  0040              LSLS     r0,r0,#1              ;362
-00006a  6008              STR      r0,[r1,#0]            ;362
+00005a  1d00              ADDS     r0,r0,#4              ;369
+00005c  6802              LDR      r2,[r0,#0]            ;369
+00005e  f0820201          EOR      r2,r2,#1              ;369
+000062  6002              STR      r2,[r0,#0]            ;369
+000064  1580              ASRS     r0,r0,#22             ;370
+000066  6008              STR      r0,[r1,#0]            ;370
+000068  0040              LSLS     r0,r0,#1              ;371
+00006a  6008              STR      r0,[r1,#0]            ;371
 00006c  bd10              POP      {r4,pc}
-;;;419    
+;;;428    
                           ENDP
 
 00006e  0000              DCW      0x0000
@@ -222,11 +222,11 @@
                           AREA ||i.QSPI_Master_Init||, CODE, READONLY, ALIGN=2
 
                   QSPI_Master_Init PROC
-;;;310    */
-;;;311    void QSPI_Master_Init(void)
+;;;319    */
+;;;320    void QSPI_Master_Init(void)
 000000  b538              PUSH     {r3-r5,lr}
-;;;312    {
-;;;313        QSPI_Open(QSPI0, QSPI_MASTER, QSPI_MODE_0, 8, QSPI_TARGET_FREQ);
+;;;321    {
+;;;322        QSPI_Open(QSPI0, QSPI_MASTER, QSPI_MODE_0, 8, QSPI_TARGET_FREQ);
 000002  4808              LDR      r0,|L4.36|
 000004  4c08              LDR      r4,|L4.40|
 000006  9000              STR      r0,[sp,#0]
@@ -235,69 +235,69 @@
 00000c  2100              MOVS     r1,#0
 00000e  4620              MOV      r0,r4
 000010  f7fffffe          BL       QSPI_Open
-;;;314    
-;;;315        /* Enable the automatic hardware slave select function. Select the SS pin and configure as low-active. */
-;;;316        QSPI_EnableAutoSS(QSPI0, QSPI_SS, QSPI_SS_ACTIVE_LOW);
+;;;323    
+;;;324        /* Enable the automatic hardware slave select function. Select the SS pin and configure as low-active. */
+;;;325        QSPI_EnableAutoSS(QSPI0, QSPI_SS, QSPI_SS_ACTIVE_LOW);
 000014  4620              MOV      r0,r4
 000016  e8bd4038          POP      {r3-r5,lr}
 00001a  2200              MOVS     r2,#0
 00001c  2101              MOVS     r1,#1
 00001e  f7ffbffe          B.W      QSPI_EnableAutoSS
-;;;317    }
-;;;318    
+;;;326    }
+;;;327    
                           ENDP
 
 000022  0000              DCW      0x0000
                   |L4.36|
-                          DCD      0x000f4240
+                          DCD      0x000186a0
                   |L4.40|
                           DCD      0x40060000
 
                           AREA ||i.QSPI_Master_PDMA_ClrBuffer||, CODE, READONLY, ALIGN=2
 
                   QSPI_Master_PDMA_ClrBuffer PROC
-;;;176    
-;;;177    void QSPI_Master_PDMA_ClrBuffer(uint8_t TxRx)
+;;;181    
+;;;182    void QSPI_Master_PDMA_ClrBuffer(uint8_t TxRx)
 000000  2100              MOVS     r1,#0
-;;;178    {
-;;;179        uint16_t i = 0;
-;;;180    
-;;;181    	if (TxRx == QSPI_TX)
-;;;182    	{
-;;;183    	    for (i = 0; i < DATA_NUM; i++)
-;;;184    	    {
-;;;185    	        g_au8MasterToSlaveTestPattern[i] = 0xFF;
+;;;183    {
+;;;184        uint16_t i = 0;
+;;;185    
+;;;186    	if (TxRx == QSPI_TX)
+;;;187    	{
+;;;188    	    for (i = 0; i < DATA_NUM; i++)
+;;;189    	    {
+;;;190    	        g_au8MasterToSlaveTestPattern[i] = 0xFF;
 000002  22ff              MOVS     r2,#0xff
 000004  b130              CBZ      r0,|L5.20|
-;;;186    	    }
-;;;187    	}
-;;;188    	else
-;;;189    	{
-;;;190    	    for (i = 0; i < DATA_NUM; i++)
-;;;191    	    {
-;;;192    	        g_au8MasterRxBuffer[i] = 0xFF;
+;;;191    	    }
+;;;192    	}
+;;;193    	else
+;;;194    	{
+;;;195    	    for (i = 0; i < DATA_NUM; i++)
+;;;196    	    {
+;;;197    	        g_au8MasterRxBuffer[i] = 0xFF;
 000006  4807              LDR      r0,|L5.36|
                   |L5.8|
 000008  5442              STRB     r2,[r0,r1]
 00000a  1c49              ADDS     r1,r1,#1
-00000c  b289              UXTH     r1,r1                 ;190
-00000e  2910              CMP      r1,#0x10              ;190
+00000c  b289              UXTH     r1,r1                 ;195
+00000e  2910              CMP      r1,#0x10              ;195
 000010  d3fa              BCC      |L5.8|
-;;;193    	    }
-;;;194    	}
-;;;195    }
+;;;198    	    }
+;;;199    	}
+;;;200    }
 000012  4770              BX       lr
                   |L5.20|
 000014  4803              LDR      r0,|L5.36|
-000016  3820              SUBS     r0,r0,#0x20           ;185
+000016  3820              SUBS     r0,r0,#0x20           ;190
                   |L5.24|
-000018  5442              STRB     r2,[r0,r1]            ;185
-00001a  1c49              ADDS     r1,r1,#1              ;185
-00001c  b289              UXTH     r1,r1                 ;183
-00001e  2910              CMP      r1,#0x10              ;183
+000018  5442              STRB     r2,[r0,r1]            ;190
+00001a  1c49              ADDS     r1,r1,#1              ;190
+00001c  b289              UXTH     r1,r1                 ;188
+00001e  2910              CMP      r1,#0x10              ;188
 000020  d3fa              BCC      |L5.24|
 000022  4770              BX       lr
-;;;196    
+;;;201    
                           ENDP
 
                   |L5.36|
@@ -311,260 +311,267 @@
                           REQUIRE _printf_x
                           REQUIRE _printf_longlong_hex
                   QSPI_Master_PDMA_Enable PROC
-;;;240    
-;;;241    void QSPI_Master_PDMA_Enable(uint8_t TxRx)
+;;;245    
+;;;246    void QSPI_Master_PDMA_Enable(uint8_t TxRx)
 000000  e92d41fc          PUSH     {r2-r8,lr}
-;;;242    {
-;;;243        uint16_t i = 0;
+;;;247    {
+;;;248        uint16_t i = 0;
 000004  2400              MOVS     r4,#0
-;;;244        static uint16_t j = 0;
-;;;245    	
-;;;246    	if (TxRx == QSPI_TX)
-;;;247    	{
-;;;248    		QSPI_Master_PDMA_ClrBuffer(QSPI_TX);
-;;;249    	
-;;;250    		//prepare master TX data
-;;;251    		g_au8MasterToSlaveTestPattern[INDEX_HEAD] = DATA_HEAD_MASTER;
-;;;252    		g_au8MasterToSlaveTestPattern[INDEX_TAIL] = DATA_TAIL_MASTER;
-;;;253    
-;;;254    		j = 1;
-;;;255    	    for (i = (INDEX_HEAD+1); i < INDEX_TAIL ; i++)
-;;;256    	    {
-;;;257    	        g_au8MasterToSlaveTestPattern[i] = (i + 0x10*(j++));
-;;;258    	    }
-;;;259    		j = 0;
-;;;260    
-;;;261    		#if 1	//TX debug
-;;;262    		printf("\r\ng_au8MasterToSlaveTestPattern : \r\n");
-;;;263    		for (i = 0 ; i < DATA_NUM ; i++)
-;;;264    		{
-;;;265    			printf("0x%2X," , g_au8MasterToSlaveTestPattern[i]);
-;;;266                if ((i+1)%8 ==0)
-;;;267                {
-;;;268                    printf("\r\n");
-;;;269                }			
-;;;270    		}
-;;;271    		#endif
-;;;272    	
-;;;273    		//TX
-;;;274    	    PDMA_SetTransferCnt(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
-000006  4e3d              LDR      r6,|L6.252|
-;;;275    		PDMA_SetTransferAddr(PDMA,QSPI_MASTER_TX_DMA_CH, (uint32_t)g_au8MasterToSlaveTestPattern, PDMA_SAR_INC, (uint32_t)&QSPI0->TX, PDMA_DAR_FIX);		
-;;;276    	    /* Set request source; set basic mode. */
-;;;277    	    PDMA_SetTransferMode(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_QSPI0_TX, FALSE, 0);
-;;;278    	    QSPI_TRIGGER_TX_PDMA(QSPI0);	
-000008  4d3d              LDR      r5,|L6.256|
-00000a  4627              MOV      r7,r4
-00000c  2301              MOVS     r3,#1                 ;254
-00000e  b1e8              CBZ      r0,|L6.76|
-;;;279    	}
-;;;280    	else
-;;;281    	{
-;;;282    		//RX	
-;;;283    		PDMA_SetTransferCnt(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
-000010  2310              MOVS     r3,#0x10
-000012  2200              MOVS     r2,#0
-000014  2101              MOVS     r1,#1
-000016  4630              MOV      r0,r6
-000018  f7fffffe          BL       PDMA_SetTransferCnt
-;;;284    		/* Set request source; set basic mode. */
-;;;285    		PDMA_SetTransferMode(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_QSPI0_RX, FALSE, 0);
-00001c  2300              MOVS     r3,#0
-00001e  2215              MOVS     r2,#0x15
-000020  2101              MOVS     r1,#1
-000022  4630              MOV      r0,r6
-000024  9700              STR      r7,[sp,#0]
+;;;249        static uint8_t k = 0x10;
+;;;250    	
+;;;251    	if (TxRx == QSPI_TX)
+;;;252    	{
+;;;253    		QSPI_Master_PDMA_ClrBuffer(QSPI_TX);
+;;;254    	
+;;;255    		//prepare master TX data
+;;;256    		g_au8MasterToSlaveTestPattern[INDEX_HEAD] = DATA_HEAD_MASTER;
+;;;257    		g_au8MasterToSlaveTestPattern[INDEX_TAIL] = DATA_TAIL_MASTER;
+;;;258    
+;;;259    	    for (i = (INDEX_HEAD+1); i < INDEX_TAIL ; i++)
+;;;260    	    {
+;;;261    	        g_au8MasterToSlaveTestPattern[i] = (i + k);
+;;;262    	    }
+;;;263    
+;;;264    		k += 0x10;
+;;;265    		if (k >= 0xFF)
+;;;266    		{
+;;;267    			k = 0x10;
+;;;268    		}
+;;;269    
+;;;270    		#if 1	//TX debug
+;;;271    		printf("\r\ng_au8MasterToSlaveTestPattern : \r\n");
+;;;272    		for (i = 0 ; i < DATA_NUM ; i++)
+;;;273    		{
+;;;274    			printf("0x%2X," , g_au8MasterToSlaveTestPattern[i]);
+;;;275                if ((i+1)%8 ==0)
+;;;276                {
+;;;277                    printf("\r\n");
+;;;278                }			
+;;;279    		}
+;;;280    		#endif
+;;;281    	
+;;;282    		//TX
+;;;283    	    PDMA_SetTransferCnt(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
+000006  4e3e              LDR      r6,|L6.256|
+;;;284    		PDMA_SetTransferAddr(PDMA,QSPI_MASTER_TX_DMA_CH, (uint32_t)g_au8MasterToSlaveTestPattern, PDMA_SAR_INC, (uint32_t)&QSPI0->TX, PDMA_DAR_FIX);		
+;;;285    	    /* Set request source; set basic mode. */
+;;;286    	    PDMA_SetTransferMode(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_QSPI0_TX, FALSE, 0);
+;;;287    	    QSPI_TRIGGER_TX_PDMA(QSPI0);	
+000008  4d3e              LDR      r5,|L6.260|
+00000a  46a0              MOV      r8,r4                 ;248
+00000c  b1f0              CBZ      r0,|L6.76|
+;;;288    	}
+;;;289    	else
+;;;290    	{
+;;;291    		//RX	
+;;;292    		PDMA_SetTransferCnt(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
+00000e  2310              MOVS     r3,#0x10
+000010  2200              MOVS     r2,#0
+000012  2101              MOVS     r1,#1
+000014  4630              MOV      r0,r6
+000016  f7fffffe          BL       PDMA_SetTransferCnt
+;;;293    		/* Set request source; set basic mode. */
+;;;294    		PDMA_SetTransferMode(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_QSPI0_RX, FALSE, 0);
+00001a  2300              MOVS     r3,#0
+00001c  2215              MOVS     r2,#0x15
+00001e  2101              MOVS     r1,#1
+000020  4630              MOV      r0,r6
+000022  f8cd8000          STR      r8,[sp,#0]
 000026  f7fffffe          BL       PDMA_SetTransferMode
-;;;286    		QSPI_TRIGGER_RX_PDMA(QSPI0);
+;;;295    		QSPI_TRIGGER_RX_PDMA(QSPI0);
 00002a  68e8              LDR      r0,[r5,#0xc]
 00002c  f0400002          ORR      r0,r0,#2
 000030  60e8              STR      r0,[r5,#0xc]
-;;;287    
-;;;288    		#if 1	//RX debug
-;;;289    		printf("\r\ng_au8MasterRxBuffer : \r\n");
-000032  a034              ADR      r0,|L6.260|
+;;;296    
+;;;297    		#if 1	//RX debug
+;;;298    		printf("\r\ng_au8MasterRxBuffer : \r\n");
+000032  a035              ADR      r0,|L6.264|
 000034  f7fffffe          BL       __2printf
-;;;290    		for (i = 0 ; i < DATA_NUM ; i++)
-;;;291    		{
-;;;292    			printf("0x%2X," , g_au8MasterRxBuffer[i]);
-000038  4d39              LDR      r5,|L6.288|
+;;;299    		for (i = 0 ; i < DATA_NUM ; i++)
+;;;300    		{
+;;;301    			printf("0x%2X," , g_au8MasterRxBuffer[i]);
+000038  4d3a              LDR      r5,|L6.292|
                   |L6.58|
-00003a  a03a              ADR      r0,|L6.292|
+00003a  a03b              ADR      r0,|L6.296|
 00003c  5d29              LDRB     r1,[r5,r4]
 00003e  f7fffffe          BL       __2printf
-;;;293                if ((i+1)%8 ==0)
+;;;302                if ((i+1)%8 ==0)
 000042  0760              LSLS     r0,r4,#29
 000044  f1b04f60          CMP      r0,#0xe0000000
-000048  d04c              BEQ      |L6.228|
-00004a  e04e              B        |L6.234|
+000048  d04d              BEQ      |L6.230|
+00004a  e04f              B        |L6.236|
                   |L6.76|
-00004c  2000              MOVS     r0,#0                 ;248
+00004c  2000              MOVS     r0,#0                 ;253
 00004e  f7fffffe          BL       QSPI_Master_PDMA_ClrBuffer
-000052  4c33              LDR      r4,|L6.288|
-000054  2030              MOVS     r0,#0x30              ;251
-000056  3c20              SUBS     r4,r4,#0x20           ;251
-000058  4a34              LDR      r2,|L6.300|
-00005a  7020              STRB     r0,[r4,#0]            ;251
-00005c  2036              MOVS     r0,#0x36              ;252
-00005e  73e0              STRB     r0,[r4,#0xf]          ;252
-000060  8013              STRH     r3,[r2,#0]            ;254
-000062  2001              MOVS     r0,#1                 ;255
+000052  4f34              LDR      r7,|L6.292|
+000054  2030              MOVS     r0,#0x30              ;256
+000056  3f20              SUBS     r7,r7,#0x20           ;256
+000058  4b35              LDR      r3,|L6.304|
+00005a  7038              STRB     r0,[r7,#0]            ;256
+00005c  2036              MOVS     r0,#0x36              ;257
+00005e  73f8              STRB     r0,[r7,#0xf]          ;257
+000060  7819              LDRB     r1,[r3,#0]            ;261
+000062  2001              MOVS     r0,#1                 ;259
                   |L6.100|
-000064  8811              LDRH     r1,[r2,#0]            ;257  ; j
-000066  eb001301          ADD      r3,r0,r1,LSL #4       ;257
-00006a  5423              STRB     r3,[r4,r0]            ;257
-00006c  1c49              ADDS     r1,r1,#1              ;257
-00006e  1c40              ADDS     r0,r0,#1              ;257
-000070  b280              UXTH     r0,r0                 ;255
-000072  8011              STRH     r1,[r2,#0]            ;257
-000074  280f              CMP      r0,#0xf               ;255
-000076  d3f5              BCC      |L6.100|
-000078  46b8              MOV      r8,r7                 ;259
-00007a  8017              STRH     r7,[r2,#0]            ;259
-00007c  a02c              ADR      r0,|L6.304|
-00007e  f7fffffe          BL       __2printf
-000082  2700              MOVS     r7,#0                 ;263
-                  |L6.132|
-000084  a027              ADR      r0,|L6.292|
-000086  5de1              LDRB     r1,[r4,r7]            ;265
-000088  f7fffffe          BL       __2printf
-00008c  0778              LSLS     r0,r7,#29             ;266
-00008e  f1b04f60          CMP      r0,#0xe0000000        ;266
-000092  d102              BNE      |L6.154|
-000094  a021              ADR      r0,|L6.284|
-000096  f7fffffe          BL       __2printf
-                  |L6.154|
-00009a  1c7f              ADDS     r7,r7,#1              ;268
-00009c  b2bf              UXTH     r7,r7                 ;263
-00009e  2f10              CMP      r7,#0x10              ;263
-0000a0  d3f0              BCC      |L6.132|
-0000a2  2200              MOVS     r2,#0                 ;274
-0000a4  2310              MOVS     r3,#0x10              ;274
-0000a6  4611              MOV      r1,r2                 ;274
-0000a8  4630              MOV      r0,r6                 ;274
-0000aa  f7fffffe          BL       PDMA_SetTransferCnt
-0000ae  4814              LDR      r0,|L6.256|
-0000b0  f44f6140          MOV      r1,#0xc00             ;275
-0000b4  3020              ADDS     r0,r0,#0x20           ;275
-0000b6  4a1a              LDR      r2,|L6.288|
-0000b8  e9cd0100          STRD     r0,r1,[sp,#0]         ;275
-0000bc  2300              MOVS     r3,#0                 ;275
-0000be  3a20              SUBS     r2,r2,#0x20           ;275
-0000c0  4619              MOV      r1,r3                 ;275
-0000c2  4630              MOV      r0,r6                 ;275
-0000c4  f7fffffe          BL       PDMA_SetTransferAddr
-0000c8  2300              MOVS     r3,#0                 ;277
-0000ca  2214              MOVS     r2,#0x14              ;277
-0000cc  4619              MOV      r1,r3                 ;277
-0000ce  4630              MOV      r0,r6                 ;277
-0000d0  f8cd8000          STR      r8,[sp,#0]            ;277
-0000d4  f7fffffe          BL       PDMA_SetTransferMode
-0000d8  68e8              LDR      r0,[r5,#0xc]          ;278
-0000da  f0400001          ORR      r0,r0,#1              ;278
-0000de  60e8              STR      r0,[r5,#0xc]          ;278
-;;;294                {
-;;;295                    printf("\r\n");
-;;;296                }			
-;;;297    		}
-;;;298    		#endif
-;;;299    
-;;;300    		QSPI_Master_PDMA_ClrBuffer(QSPI_RX);			
-;;;301    	}
-;;;302    }
-0000e0  e8bd81fc          POP      {r2-r8,pc}
-                  |L6.228|
-0000e4  a00d              ADR      r0,|L6.284|
-0000e6  f7fffffe          BL       __2printf
-                  |L6.234|
-0000ea  1c64              ADDS     r4,r4,#1              ;295
-0000ec  b2a4              UXTH     r4,r4                 ;290
-0000ee  2c10              CMP      r4,#0x10              ;290
-0000f0  d3a3              BCC      |L6.58|
-0000f2  e8bd41fc          POP      {r2-r8,lr}            ;300
-0000f6  2001              MOVS     r0,#1                 ;300
-0000f8  f7ffbffe          B.W      QSPI_Master_PDMA_ClrBuffer
-;;;303    
+000064  1842              ADDS     r2,r0,r1              ;261
+000066  543a              STRB     r2,[r7,r0]            ;261
+000068  1c40              ADDS     r0,r0,#1              ;261
+00006a  b280              UXTH     r0,r0                 ;259
+00006c  280f              CMP      r0,#0xf               ;259
+00006e  d3f9              BCC      |L6.100|
+000070  3110              ADDS     r1,r1,#0x10           ;259
+000072  b2c8              UXTB     r0,r1                 ;264
+000074  7018              STRB     r0,[r3,#0]            ;264
+000076  28ff              CMP      r0,#0xff              ;265
+000078  d301              BCC      |L6.126|
+00007a  2010              MOVS     r0,#0x10              ;267
+00007c  7018              STRB     r0,[r3,#0]            ;267
+                  |L6.126|
+00007e  a02d              ADR      r0,|L6.308|
+000080  f7fffffe          BL       __2printf
+000084  2400              MOVS     r4,#0                 ;272
+                  |L6.134|
+000086  a028              ADR      r0,|L6.296|
+000088  5d39              LDRB     r1,[r7,r4]            ;274
+00008a  f7fffffe          BL       __2printf
+00008e  0760              LSLS     r0,r4,#29             ;275
+000090  f1b04f60          CMP      r0,#0xe0000000        ;275
+000094  d102              BNE      |L6.156|
+000096  a022              ADR      r0,|L6.288|
+000098  f7fffffe          BL       __2printf
+                  |L6.156|
+00009c  1c64              ADDS     r4,r4,#1              ;277
+00009e  b2a4              UXTH     r4,r4                 ;272
+0000a0  2c10              CMP      r4,#0x10              ;272
+0000a2  d3f0              BCC      |L6.134|
+0000a4  2200              MOVS     r2,#0                 ;283
+0000a6  2310              MOVS     r3,#0x10              ;283
+0000a8  4611              MOV      r1,r2                 ;283
+0000aa  4630              MOV      r0,r6                 ;283
+0000ac  f7fffffe          BL       PDMA_SetTransferCnt
+0000b0  4814              LDR      r0,|L6.260|
+0000b2  f44f6140          MOV      r1,#0xc00             ;284
+0000b6  3020              ADDS     r0,r0,#0x20           ;284
+0000b8  4a1a              LDR      r2,|L6.292|
+0000ba  e9cd0100          STRD     r0,r1,[sp,#0]         ;284
+0000be  2300              MOVS     r3,#0                 ;284
+0000c0  3a20              SUBS     r2,r2,#0x20           ;284
+0000c2  4619              MOV      r1,r3                 ;284
+0000c4  4630              MOV      r0,r6                 ;284
+0000c6  f7fffffe          BL       PDMA_SetTransferAddr
+0000ca  2300              MOVS     r3,#0                 ;286
+0000cc  2214              MOVS     r2,#0x14              ;286
+0000ce  4619              MOV      r1,r3                 ;286
+0000d0  4630              MOV      r0,r6                 ;286
+0000d2  f8cd8000          STR      r8,[sp,#0]            ;286
+0000d6  f7fffffe          BL       PDMA_SetTransferMode
+0000da  68e8              LDR      r0,[r5,#0xc]          ;287
+0000dc  f0400001          ORR      r0,r0,#1              ;287
+0000e0  60e8              STR      r0,[r5,#0xc]          ;287
+;;;303                {
+;;;304                    printf("\r\n");
+;;;305                }			
+;;;306    		}
+;;;307    		#endif
+;;;308    
+;;;309    		QSPI_Master_PDMA_ClrBuffer(QSPI_RX);			
+;;;310    	}
+;;;311    }
+0000e2  e8bd81fc          POP      {r2-r8,pc}
+                  |L6.230|
+0000e6  a00e              ADR      r0,|L6.288|
+0000e8  f7fffffe          BL       __2printf
+                  |L6.236|
+0000ec  1c64              ADDS     r4,r4,#1              ;304
+0000ee  b2a4              UXTH     r4,r4                 ;299
+0000f0  2c10              CMP      r4,#0x10              ;299
+0000f2  d3a2              BCC      |L6.58|
+0000f4  e8bd41fc          POP      {r2-r8,lr}            ;309
+0000f8  2001              MOVS     r0,#1                 ;309
+0000fa  f7ffbffe          B.W      QSPI_Master_PDMA_ClrBuffer
+;;;312    
                           ENDP
 
-                  |L6.252|
-                          DCD      0x40008000
+0000fe  0000              DCW      0x0000
                   |L6.256|
-                          DCD      0x40060000
+                          DCD      0x40008000
                   |L6.260|
-000104  0d0a675f          DCB      "\r\ng_au8MasterRxBuffer : "
-000108  6175384d
-00010c  61737465
-000110  72527842
-000114  75666665
-000118  72203a20
-                  |L6.284|
-00011c  0d0a00            DCB      "\r\n",0
-00011f  00                DCB      0
+                          DCD      0x40060000
+                  |L6.264|
+000108  0d0a675f          DCB      "\r\ng_au8MasterRxBuffer : "
+00010c  6175384d
+000110  61737465
+000114  72527842
+000118  75666665
+00011c  72203a20
                   |L6.288|
-                          DCD      ||.bss||+0x20
+000120  0d0a00            DCB      "\r\n",0
+000123  00                DCB      0
                   |L6.292|
-000124  30782532          DCB      "0x%2X,",0
-000128  582c00  
-00012b  00                DCB      0
-                  |L6.300|
-                          DCD      ||.data||
+                          DCD      ||.bss||+0x20
+                  |L6.296|
+000128  30782532          DCB      "0x%2X,",0
+00012c  582c00  
+00012f  00                DCB      0
                   |L6.304|
-000130  0d0a675f          DCB      "\r\ng_au8MasterToSlaveTestPattern : \r\n",0
-000134  6175384d
-000138  61737465
-00013c  72546f53
-000140  6c617665
-000144  54657374
-000148  50617474
-00014c  65726e20
-000150  3a200d0a
-000154  00      
-000155  00                DCB      0
-000156  00                DCB      0
-000157  00                DCB      0
+                          DCD      ||.data||
+                  |L6.308|
+000134  0d0a675f          DCB      "\r\ng_au8MasterToSlaveTestPattern : \r\n",0
+000138  6175384d
+00013c  61737465
+000140  72546f53
+000144  6c617665
+000148  54657374
+00014c  50617474
+000150  65726e20
+000154  3a200d0a
+000158  00      
+000159  00                DCB      0
+00015a  00                DCB      0
+00015b  00                DCB      0
 
                           AREA ||i.QSPI_Master_PDMA_PreInit||, CODE, READONLY, ALIGN=2
 
                   QSPI_Master_PDMA_PreInit PROC
-;;;196    
-;;;197    void QSPI_Master_PDMA_PreInit(void)
+;;;201    
+;;;202    void QSPI_Master_PDMA_PreInit(void)
 000000  b57c              PUSH     {r2-r6,lr}
-;;;198    {
-;;;199        uint16_t i = 0;
-;;;200    	
-;;;201    	//prepare data
-;;;202        for (i=0; i < DATA_NUM; i++)
-;;;203        {
-;;;204            g_au8MasterToSlaveTestPattern[i] = i;
+;;;203    {
+;;;204        uint16_t i = 0;
+;;;205    	
+;;;206    	//prepare data
+;;;207        for (i=0; i < DATA_NUM; i++)
+;;;208        {
+;;;209            g_au8MasterToSlaveTestPattern[i] = i;
 000002  4a36              LDR      r2,|L7.220|
-000004  2000              MOVS     r0,#0                 ;199
-;;;205            g_au8MasterRxBuffer[i] = 0xFF;
+000004  2000              MOVS     r0,#0                 ;204
+;;;210            g_au8MasterRxBuffer[i] = 0xFF;
 000006  21ff              MOVS     r1,#0xff
 000008  f1020420          ADD      r4,r2,#0x20
                   |L7.12|
-00000c  5410              STRB     r0,[r2,r0]            ;204
+00000c  5410              STRB     r0,[r2,r0]            ;209
 00000e  5421              STRB     r1,[r4,r0]
 000010  1c40              ADDS     r0,r0,#1
-000012  b280              UXTH     r0,r0                 ;202
-000014  2810              CMP      r0,#0x10              ;202
+000012  b280              UXTH     r0,r0                 ;207
+000014  2810              CMP      r0,#0x10              ;207
 000016  d3f9              BCC      |L7.12|
-;;;206        }
-;;;207    
-;;;208        PDMA_Open(PDMA, QSPI_MASTER_OPENED_CH);
+;;;211        }
+;;;212    
+;;;213        PDMA_Open(PDMA, QSPI_MASTER_OPENED_CH);
 000018  4d31              LDR      r5,|L7.224|
 00001a  2103              MOVS     r1,#3
 00001c  4628              MOV      r0,r5
 00001e  f7fffffe          BL       PDMA_Open
-;;;209    
-;;;210    	//TX
-;;;211        PDMA_SetTransferCnt(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
+;;;214    
+;;;215    	//TX
+;;;216        PDMA_SetTransferCnt(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
 000022  2200              MOVS     r2,#0
 000024  2310              MOVS     r3,#0x10
 000026  4611              MOV      r1,r2
 000028  4628              MOV      r0,r5
 00002a  f7fffffe          BL       PDMA_SetTransferCnt
-;;;212        /* Set source/destination address and attributes */
-;;;213        PDMA_SetTransferAddr(PDMA,QSPI_MASTER_TX_DMA_CH, (uint32_t)g_au8MasterToSlaveTestPattern, PDMA_SAR_INC, (uint32_t)&QSPI0->TX, PDMA_DAR_FIX);
+;;;217        /* Set source/destination address and attributes */
+;;;218        PDMA_SetTransferAddr(PDMA,QSPI_MASTER_TX_DMA_CH, (uint32_t)g_au8MasterToSlaveTestPattern, PDMA_SAR_INC, (uint32_t)&QSPI0->TX, PDMA_DAR_FIX);
 00002e  f44f6140          MOV      r1,#0xc00
 000032  482c              LDR      r0,|L7.228|
 000034  e9cd0100          STRD     r0,r1,[sp,#0]
@@ -573,8 +580,8 @@
 00003c  4619              MOV      r1,r3
 00003e  4628              MOV      r0,r5
 000040  f7fffffe          BL       PDMA_SetTransferAddr
-;;;214        /* Set request source; set basic mode. */
-;;;215        PDMA_SetTransferMode(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_QSPI0_TX, FALSE, 0);
+;;;219        /* Set request source; set basic mode. */
+;;;220        PDMA_SetTransferMode(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_QSPI0_TX, FALSE, 0);
 000044  2600              MOVS     r6,#0
 000046  4633              MOV      r3,r6
 000048  2214              MOVS     r2,#0x14
@@ -582,28 +589,28 @@
 00004c  4628              MOV      r0,r5
 00004e  9600              STR      r6,[sp,#0]
 000050  f7fffffe          BL       PDMA_SetTransferMode
-;;;216        /* Single request type. SPI only support PDMA single request type. */
-;;;217        PDMA_SetBurstType(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_REQ_SINGLE, 0);
+;;;221        /* Single request type. SPI only support PDMA single request type. */
+;;;222        PDMA_SetBurstType(PDMA,QSPI_MASTER_TX_DMA_CH, PDMA_REQ_SINGLE, 0);
 000054  2300              MOVS     r3,#0
 000056  2204              MOVS     r2,#4
 000058  4619              MOV      r1,r3
 00005a  4628              MOV      r0,r5
 00005c  f7fffffe          BL       PDMA_SetBurstType
-;;;218        /* Disable table interrupt */
-;;;219        PDMA->DSCT[QSPI_MASTER_TX_DMA_CH].CTL |= PDMA_DSCT_CTL_TBINTDIS_Msk;
+;;;223        /* Disable table interrupt */
+;;;224        PDMA->DSCT[QSPI_MASTER_TX_DMA_CH].CTL |= PDMA_DSCT_CTL_TBINTDIS_Msk;
 000060  6828              LDR      r0,[r5,#0]
 000062  f0400080          ORR      r0,r0,#0x80
 000066  6028              STR      r0,[r5,#0]
-;;;220    
-;;;221    	//RX	
-;;;222        PDMA_SetTransferCnt(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
+;;;225    
+;;;226    	//RX	
+;;;227        PDMA_SetTransferCnt(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
 000068  2310              MOVS     r3,#0x10
 00006a  2200              MOVS     r2,#0
 00006c  2101              MOVS     r1,#1
 00006e  4628              MOV      r0,r5
 000070  f7fffffe          BL       PDMA_SetTransferCnt
-;;;223        /* Set source/destination address and attributes */
-;;;224        PDMA_SetTransferAddr(PDMA,QSPI_MASTER_RX_DMA_CH, (uint32_t)&QSPI0->RX, PDMA_SAR_FIX, (uint32_t)g_au8MasterRxBuffer, PDMA_DAR_INC);
+;;;228        /* Set source/destination address and attributes */
+;;;229        PDMA_SetTransferAddr(PDMA,QSPI_MASTER_RX_DMA_CH, (uint32_t)&QSPI0->RX, PDMA_SAR_FIX, (uint32_t)g_au8MasterRxBuffer, PDMA_DAR_INC);
 000074  4a1b              LDR      r2,|L7.228|
 000076  e9cd4600          STRD     r4,r6,[sp,#0]
 00007a  f44f7340          MOV      r3,#0x300
@@ -611,55 +618,55 @@
 000080  2101              MOVS     r1,#1
 000082  4628              MOV      r0,r5
 000084  f7fffffe          BL       PDMA_SetTransferAddr
-;;;225        /* Set request source; set basic mode. */
-;;;226        PDMA_SetTransferMode(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_QSPI0_RX, FALSE, 0);
+;;;230        /* Set request source; set basic mode. */
+;;;231        PDMA_SetTransferMode(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_QSPI0_RX, FALSE, 0);
 000088  2300              MOVS     r3,#0
 00008a  2215              MOVS     r2,#0x15
 00008c  2101              MOVS     r1,#1
 00008e  4628              MOV      r0,r5
 000090  9600              STR      r6,[sp,#0]
 000092  f7fffffe          BL       PDMA_SetTransferMode
-;;;227        /* Single request type. SPI only support PDMA single request type. */
-;;;228        PDMA_SetBurstType(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_REQ_SINGLE, 0);
+;;;232        /* Single request type. SPI only support PDMA single request type. */
+;;;233        PDMA_SetBurstType(PDMA,QSPI_MASTER_RX_DMA_CH, PDMA_REQ_SINGLE, 0);
 000096  2300              MOVS     r3,#0
 000098  2204              MOVS     r2,#4
 00009a  2101              MOVS     r1,#1
 00009c  4628              MOV      r0,r5
 00009e  f7fffffe          BL       PDMA_SetBurstType
-;;;229        /* Disable table interrupt */
-;;;230        PDMA->DSCT[QSPI_MASTER_RX_DMA_CH].CTL |= PDMA_DSCT_CTL_TBINTDIS_Msk;
+;;;234        /* Disable table interrupt */
+;;;235        PDMA->DSCT[QSPI_MASTER_RX_DMA_CH].CTL |= PDMA_DSCT_CTL_TBINTDIS_Msk;
 0000a2  6928              LDR      r0,[r5,#0x10]
 0000a4  f0400080          ORR      r0,r0,#0x80
 0000a8  6128              STR      r0,[r5,#0x10]
-;;;231    
-;;;232        QSPI_TRIGGER_RX_PDMA(QSPI0);
+;;;236    
+;;;237        QSPI_TRIGGER_RX_PDMA(QSPI0);
 0000aa  480e              LDR      r0,|L7.228|
 0000ac  3820              SUBS     r0,r0,#0x20
 0000ae  68c1              LDR      r1,[r0,#0xc]
 0000b0  f0410102          ORR      r1,r1,#2
 0000b4  60c1              STR      r1,[r0,#0xc]
-;;;233        QSPI_TRIGGER_TX_PDMA(QSPI0);
+;;;238        QSPI_TRIGGER_TX_PDMA(QSPI0);
 0000b6  68c1              LDR      r1,[r0,#0xc]
 0000b8  f0410101          ORR      r1,r1,#1
 0000bc  60c1              STR      r1,[r0,#0xc]
-;;;234    
-;;;235        PDMA_EnableInt(PDMA, QSPI_MASTER_TX_DMA_CH, PDMA_INT_TRANS_DONE);
+;;;239    
+;;;240        PDMA_EnableInt(PDMA, QSPI_MASTER_TX_DMA_CH, PDMA_INT_TRANS_DONE);
 0000be  2200              MOVS     r2,#0
 0000c0  4611              MOV      r1,r2
 0000c2  4628              MOV      r0,r5
 0000c4  f7fffffe          BL       PDMA_EnableInt
-;;;236        PDMA_EnableInt(PDMA, QSPI_MASTER_RX_DMA_CH, PDMA_INT_TRANS_DONE);
+;;;241        PDMA_EnableInt(PDMA, QSPI_MASTER_RX_DMA_CH, PDMA_INT_TRANS_DONE);
 0000c8  2200              MOVS     r2,#0
 0000ca  2101              MOVS     r1,#1
 0000cc  4628              MOV      r0,r5
 0000ce  f7fffffe          BL       PDMA_EnableInt
-;;;237        NVIC_EnableIRQ(PDMA_IRQn);
+;;;242        NVIC_EnableIRQ(PDMA_IRQn);
 0000d2  e8bd407c          POP      {r2-r6,lr}
 0000d6  2028              MOVS     r0,#0x28
 0000d8  f7ffbffe          B.W      NVIC_EnableIRQ
-;;;238    	
-;;;239    }
-;;;240    
+;;;243    	
+;;;244    }
+;;;245    
                           ENDP
 
                   |L7.220|
@@ -672,11 +679,11 @@
                           AREA ||i.QSPI_Slave_Init||, CODE, READONLY, ALIGN=2
 
                   QSPI_Slave_Init PROC
-;;;170    
-;;;171    void QSPI_Slave_Init(void)
+;;;175    
+;;;176    void QSPI_Slave_Init(void)
 000000  b508              PUSH     {r3,lr}
-;;;172    {
-;;;173        QSPI_Open(QSPI0, QSPI_SLAVE, QSPI_MODE_0, 8, (uint32_t)NULL);
+;;;177    {
+;;;178        QSPI_Open(QSPI0, QSPI_SLAVE, QSPI_MODE_0, 8, (uint32_t)NULL);
 000002  2000              MOVS     r0,#0
 000004  2204              MOVS     r2,#4
 000006  9000              STR      r0,[sp,#0]
@@ -684,9 +691,9 @@
 00000a  0411              LSLS     r1,r2,#16
 00000c  4801              LDR      r0,|L8.20|
 00000e  f7fffffe          BL       QSPI_Open
-;;;174    }
+;;;179    }
 000012  bd08              POP      {r3,pc}
-;;;175    
+;;;180    
                           ENDP
 
                   |L8.20|
@@ -755,7 +762,7 @@
 000000  e92d41fc          PUSH     {r2-r8,lr}
 ;;;106    {
 ;;;107        uint16_t i = 0;
-000004  2400              MOVS     r4,#0
+000004  2500              MOVS     r5,#0
 ;;;108    
 ;;;109    	if (TxRx == QSPI_TX)
 ;;;110    	{		
@@ -768,202 +775,208 @@
 ;;;117    
 ;;;118    			g_au8SlaveToMasterTestPattern[INDEX_HEAD] = DATA_HEAD_SLAVE;
 ;;;119    			g_au8SlaveToMasterTestPattern[INDEX_TAIL] = DATA_TAIL_SLAVE;
-;;;120    		
+;;;120    
 ;;;121    		    for (i = (INDEX_HEAD+1); i < INDEX_TAIL; i++)
 ;;;122    		    {
-;;;123    		        g_au8SlaveToMasterTestPattern[i] = i;
+;;;123    		        g_au8SlaveToMasterTestPattern[INDEX_TAIL-i] = g_au8SlaveRxBuffer[i];
 ;;;124    		    }
-;;;125    		}
-;;;126    
-;;;127    		#if 1	//TX debug
-;;;128    		printf("\r\ng_au8SlaveToMasterTestPattern : \r\n");
-;;;129    		for (i = 0 ; i < DATA_NUM ; i++)
-;;;130    		{
-;;;131    			printf("0x%2X," , g_au8SlaveToMasterTestPattern[i]);
-;;;132                if ((i+1)%8 ==0)
-;;;133                {
-;;;134                    printf("\r\n");
-;;;135                }			
-;;;136    		}
-;;;137    		#endif			
-;;;138    	
-;;;139    		//TX
-;;;140    	    PDMA_SetTransferCnt(PDMA,QSPI_SLAVE_TX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
-000006  4e3c              LDR      r6,|L10.248|
-;;;141       	 	PDMA_SetTransferAddr(PDMA,QSPI_SLAVE_TX_DMA_CH, (uint32_t)g_au8SlaveToMasterTestPattern, PDMA_SAR_INC, (uint32_t)&QSPI0->TX, PDMA_DAR_FIX);		
-;;;142    	    /* Set request source; set basic mode. */
-;;;143    	    PDMA_SetTransferMode(PDMA,QSPI_SLAVE_TX_DMA_CH, PDMA_QSPI0_TX, FALSE, 0);
-;;;144    	    QSPI_TRIGGER_TX_PDMA(QSPI0);		
-000008  4d3c              LDR      r5,|L10.252|
-00000a  4f3d              LDR      r7,|L10.256|
-00000c  46a0              MOV      r8,r4                 ;107
+;;;125    			
+;;;126    //		    for (i = (INDEX_HEAD+1); i < INDEX_TAIL; i++)
+;;;127    //		    {
+;;;128    //		        g_au8SlaveToMasterTestPattern[i] = i;
+;;;129    //		    }
+;;;130    		}
+;;;131    
+;;;132    		#if 1	//TX debug
+;;;133    		printf("\r\ng_au8SlaveToMasterTestPattern : \r\n");
+;;;134    		for (i = 0 ; i < DATA_NUM ; i++)
+;;;135    		{
+;;;136    			printf("0x%2X," , g_au8SlaveToMasterTestPattern[i]);
+;;;137                if ((i+1)%8 ==0)
+;;;138                {
+;;;139                    printf("\r\n");
+;;;140                }			
+;;;141    		}
+;;;142    		#endif			
+;;;143    	
+;;;144    		//TX
+;;;145    	    PDMA_SetTransferCnt(PDMA,QSPI_SLAVE_TX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
+000006  4f3d              LDR      r7,|L10.252|
+;;;146       	 	PDMA_SetTransferAddr(PDMA,QSPI_SLAVE_TX_DMA_CH, (uint32_t)g_au8SlaveToMasterTestPattern, PDMA_SAR_INC, (uint32_t)&QSPI0->TX, PDMA_DAR_FIX);		
+;;;147    	    /* Set request source; set basic mode. */
+;;;148    	    PDMA_SetTransferMode(PDMA,QSPI_SLAVE_TX_DMA_CH, PDMA_QSPI0_TX, FALSE, 0);
+;;;149    	    QSPI_TRIGGER_TX_PDMA(QSPI0);		
+000008  4e3d              LDR      r6,|L10.256|
+00000a  4c3e              LDR      r4,|L10.260|
+00000c  46a8              MOV      r8,r5                 ;107
 00000e  b1e8              CBZ      r0,|L10.76|
-;;;145    
-;;;146    	}
-;;;147    	else
-;;;148    	{		
-;;;149    		//RX
-;;;150    	    PDMA_SetTransferCnt(PDMA,QSPI_SLAVE_RX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
+;;;150    
+;;;151    	}
+;;;152    	else
+;;;153    	{		
+;;;154    		//RX
+;;;155    	    PDMA_SetTransferCnt(PDMA,QSPI_SLAVE_RX_DMA_CH, PDMA_WIDTH_8, DATA_NUM);
 000010  2310              MOVS     r3,#0x10
 000012  2200              MOVS     r2,#0
 000014  2103              MOVS     r1,#3
-000016  4630              MOV      r0,r6
+000016  4638              MOV      r0,r7
 000018  f7fffffe          BL       PDMA_SetTransferCnt
-;;;151    	    /* Set request source; set basic mode. */
-;;;152    	    PDMA_SetTransferMode(PDMA,QSPI_SLAVE_RX_DMA_CH, PDMA_QSPI0_RX, FALSE, 0);
+;;;156    	    /* Set request source; set basic mode. */
+;;;157    	    PDMA_SetTransferMode(PDMA,QSPI_SLAVE_RX_DMA_CH, PDMA_QSPI0_RX, FALSE, 0);
 00001c  2300              MOVS     r3,#0
 00001e  2215              MOVS     r2,#0x15
 000020  2103              MOVS     r1,#3
-000022  4630              MOV      r0,r6
+000022  4638              MOV      r0,r7
 000024  f8cd8000          STR      r8,[sp,#0]
 000028  f7fffffe          BL       PDMA_SetTransferMode
-;;;153    	    QSPI_TRIGGER_RX_PDMA(QSPI0);	
-00002c  68e8              LDR      r0,[r5,#0xc]
+;;;158    	    QSPI_TRIGGER_RX_PDMA(QSPI0);	
+00002c  68f0              LDR      r0,[r6,#0xc]
 00002e  f0400002          ORR      r0,r0,#2
-000032  60e8              STR      r0,[r5,#0xc]
-;;;154    
-;;;155    		#if 1	//RX debug
-;;;156    		printf("\r\ng_au8SlaveRxBuffer : \r\n");
-000034  a033              ADR      r0,|L10.260|
+000032  60f0              STR      r0,[r6,#0xc]
+;;;159    
+;;;160    		#if 1	//RX debug
+;;;161    		printf("\r\ng_au8SlaveRxBuffer : \r\n");
+000034  a034              ADR      r0,|L10.264|
 000036  f7fffffe          BL       __2printf
                   |L10.58|
-;;;157    		for (i = 0 ; i < DATA_NUM ; i++)
-;;;158    		{
-;;;159    			printf("0x%2X," , g_au8SlaveRxBuffer[i]);
-00003a  5d39              LDRB     r1,[r7,r4]
-00003c  a038              ADR      r0,|L10.288|
+;;;162    		for (i = 0 ; i < DATA_NUM ; i++)
+;;;163    		{
+;;;164    			printf("0x%2X," , g_au8SlaveRxBuffer[i]);
+00003a  5d61              LDRB     r1,[r4,r5]
+00003c  a039              ADR      r0,|L10.292|
 00003e  f7fffffe          BL       __2printf
-;;;160                if ((i+1)%8 ==0)
-000042  0760              LSLS     r0,r4,#29
+;;;165                if ((i+1)%8 ==0)
+000042  0768              LSLS     r0,r5,#29
 000044  f1b04f60          CMP      r0,#0xe0000000
-000048  d049              BEQ      |L10.222|
-00004a  e04b              B        |L10.228|
+000048  d04c              BEQ      |L10.228|
+00004a  e04e              B        |L10.234|
                   |L10.76|
 00004c  2000              MOVS     r0,#0                 ;111
 00004e  f7fffffe          BL       QSPI_Slave_PDMA_ClrBuffer
-000052  4c2b              LDR      r4,|L10.256|
-000054  7838              LDRB     r0,[r7,#0]            ;114  ; g_au8SlaveRxBuffer
-000056  3c20              SUBS     r4,r4,#0x20           ;118
+000052  4d2c              LDR      r5,|L10.260|
+000054  7820              LDRB     r0,[r4,#0]            ;114  ; g_au8SlaveRxBuffer
+000056  3d20              SUBS     r5,r5,#0x20           ;118
 000058  2830              CMP      r0,#0x30              ;114
-00005a  d10c              BNE      |L10.118|
-00005c  7bf8              LDRB     r0,[r7,#0xf]          ;115  ; g_au8SlaveRxBuffer
+00005a  d10f              BNE      |L10.124|
+00005c  7be0              LDRB     r0,[r4,#0xf]          ;115  ; g_au8SlaveRxBuffer
 00005e  2836              CMP      r0,#0x36              ;115
-000060  d109              BNE      |L10.118|
+000060  d10c              BNE      |L10.124|
 000062  2055              MOVS     r0,#0x55              ;118
-000064  7020              STRB     r0,[r4,#0]            ;118
+000064  7028              STRB     r0,[r5,#0]            ;118
 000066  2066              MOVS     r0,#0x66              ;119
-000068  73e0              STRB     r0,[r4,#0xf]          ;119
-00006a  2101              MOVS     r1,#1                 ;121
+000068  73e8              STRB     r0,[r5,#0xf]          ;119
+00006a  2001              MOVS     r0,#1                 ;121
                   |L10.108|
-00006c  5461              STRB     r1,[r4,r1]            ;123
-00006e  1c49              ADDS     r1,r1,#1              ;123
-000070  b289              UXTH     r1,r1                 ;121
-000072  290f              CMP      r1,#0xf               ;121
-000074  d3fa              BCC      |L10.108|
-                  |L10.118|
-000076  a02c              ADR      r0,|L10.296|
-000078  f7fffffe          BL       __2printf
-00007c  2700              MOVS     r7,#0                 ;129
-                  |L10.126|
-00007e  a028              ADR      r0,|L10.288|
-000080  5de1              LDRB     r1,[r4,r7]            ;131
-000082  f7fffffe          BL       __2printf
-000086  0778              LSLS     r0,r7,#29             ;132
-000088  f1b04f60          CMP      r0,#0xe0000000        ;132
-00008c  d102              BNE      |L10.148|
-00008e  a030              ADR      r0,|L10.336|
-000090  f7fffffe          BL       __2printf
-                  |L10.148|
-000094  1c7f              ADDS     r7,r7,#1              ;134
-000096  b2bf              UXTH     r7,r7                 ;129
-000098  2f10              CMP      r7,#0x10              ;129
-00009a  d3f0              BCC      |L10.126|
-00009c  2310              MOVS     r3,#0x10              ;140
-00009e  2200              MOVS     r2,#0                 ;140
-0000a0  2102              MOVS     r1,#2                 ;140
-0000a2  4630              MOV      r0,r6                 ;140
-0000a4  f7fffffe          BL       PDMA_SetTransferCnt
-0000a8  4814              LDR      r0,|L10.252|
-0000aa  f44f6140          MOV      r1,#0xc00             ;141
-0000ae  3020              ADDS     r0,r0,#0x20           ;141
-0000b0  4a13              LDR      r2,|L10.256|
-0000b2  e9cd0100          STRD     r0,r1,[sp,#0]         ;141
-0000b6  2300              MOVS     r3,#0                 ;141
-0000b8  3a20              SUBS     r2,r2,#0x20           ;141
-0000ba  2102              MOVS     r1,#2                 ;141
-0000bc  4630              MOV      r0,r6                 ;141
-0000be  f7fffffe          BL       PDMA_SetTransferAddr
-0000c2  2300              MOVS     r3,#0                 ;143
-0000c4  2214              MOVS     r2,#0x14              ;143
-0000c6  2102              MOVS     r1,#2                 ;143
-0000c8  4630              MOV      r0,r6                 ;143
-0000ca  f8cd8000          STR      r8,[sp,#0]            ;143
-0000ce  f7fffffe          BL       PDMA_SetTransferMode
-0000d2  68e8              LDR      r0,[r5,#0xc]          ;144
-0000d4  f0400001          ORR      r0,r0,#1              ;144
-0000d8  60e8              STR      r0,[r5,#0xc]          ;144
-;;;161                {
-;;;162                    printf("\r\n");
-;;;163                }			
-;;;164    		}
-;;;165    		#endif
-;;;166    
-;;;167    		QSPI_Slave_PDMA_ClrBuffer(QSPI_RX);	
-;;;168    	}
-;;;169    }
-0000da  e8bd81fc          POP      {r2-r8,pc}
-                  |L10.222|
-0000de  a01c              ADR      r0,|L10.336|
-0000e0  f7fffffe          BL       __2printf
+00006c  f1c0020f          RSB      r2,r0,#0xf            ;123
+000070  5c21              LDRB     r1,[r4,r0]            ;123
+000072  1c40              ADDS     r0,r0,#1              ;123
+000074  b280              UXTH     r0,r0                 ;121
+000076  54a9              STRB     r1,[r5,r2]            ;123
+000078  280f              CMP      r0,#0xf               ;121
+00007a  d3f7              BCC      |L10.108|
+                  |L10.124|
+00007c  a02b              ADR      r0,|L10.300|
+00007e  f7fffffe          BL       __2printf
+000082  2400              MOVS     r4,#0                 ;134
+                  |L10.132|
+000084  a027              ADR      r0,|L10.292|
+000086  5d29              LDRB     r1,[r5,r4]            ;136
+000088  f7fffffe          BL       __2printf
+00008c  0760              LSLS     r0,r4,#29             ;137
+00008e  f1b04f60          CMP      r0,#0xe0000000        ;137
+000092  d102              BNE      |L10.154|
+000094  a02f              ADR      r0,|L10.340|
+000096  f7fffffe          BL       __2printf
+                  |L10.154|
+00009a  1c64              ADDS     r4,r4,#1              ;139
+00009c  b2a4              UXTH     r4,r4                 ;134
+00009e  2c10              CMP      r4,#0x10              ;134
+0000a0  d3f0              BCC      |L10.132|
+0000a2  2310              MOVS     r3,#0x10              ;145
+0000a4  2200              MOVS     r2,#0                 ;145
+0000a6  2102              MOVS     r1,#2                 ;145
+0000a8  4638              MOV      r0,r7                 ;145
+0000aa  f7fffffe          BL       PDMA_SetTransferCnt
+0000ae  4814              LDR      r0,|L10.256|
+0000b0  f44f6140          MOV      r1,#0xc00             ;146
+0000b4  3020              ADDS     r0,r0,#0x20           ;146
+0000b6  4a13              LDR      r2,|L10.260|
+0000b8  e9cd0100          STRD     r0,r1,[sp,#0]         ;146
+0000bc  2300              MOVS     r3,#0                 ;146
+0000be  3a20              SUBS     r2,r2,#0x20           ;146
+0000c0  2102              MOVS     r1,#2                 ;146
+0000c2  4638              MOV      r0,r7                 ;146
+0000c4  f7fffffe          BL       PDMA_SetTransferAddr
+0000c8  2300              MOVS     r3,#0                 ;148
+0000ca  2214              MOVS     r2,#0x14              ;148
+0000cc  2102              MOVS     r1,#2                 ;148
+0000ce  4638              MOV      r0,r7                 ;148
+0000d0  f8cd8000          STR      r8,[sp,#0]            ;148
+0000d4  f7fffffe          BL       PDMA_SetTransferMode
+0000d8  68f0              LDR      r0,[r6,#0xc]          ;149
+0000da  f0400001          ORR      r0,r0,#1              ;149
+0000de  60f0              STR      r0,[r6,#0xc]          ;149
+;;;166                {
+;;;167                    printf("\r\n");
+;;;168                }			
+;;;169    		}
+;;;170    		#endif
+;;;171    
+;;;172    		QSPI_Slave_PDMA_ClrBuffer(QSPI_RX);	
+;;;173    	}
+;;;174    }
+0000e0  e8bd81fc          POP      {r2-r8,pc}
                   |L10.228|
-0000e4  1c64              ADDS     r4,r4,#1              ;162
-0000e6  b2a4              UXTH     r4,r4                 ;157
-0000e8  2c10              CMP      r4,#0x10              ;157
-0000ea  d3a6              BCC      |L10.58|
-0000ec  e8bd41fc          POP      {r2-r8,lr}            ;167
-0000f0  2001              MOVS     r0,#1                 ;167
-0000f2  f7ffbffe          B.W      QSPI_Slave_PDMA_ClrBuffer
-;;;170    
+0000e4  a01b              ADR      r0,|L10.340|
+0000e6  f7fffffe          BL       __2printf
+                  |L10.234|
+0000ea  1c6d              ADDS     r5,r5,#1              ;167
+0000ec  b2ad              UXTH     r5,r5                 ;162
+0000ee  2d10              CMP      r5,#0x10              ;162
+0000f0  d3a3              BCC      |L10.58|
+0000f2  e8bd41fc          POP      {r2-r8,lr}            ;172
+0000f6  2001              MOVS     r0,#1                 ;172
+0000f8  f7ffbffe          B.W      QSPI_Slave_PDMA_ClrBuffer
+;;;175    
                           ENDP
 
-0000f6  0000              DCW      0x0000
-                  |L10.248|
-                          DCD      0x40008000
                   |L10.252|
-                          DCD      0x40060000
+                          DCD      0x40008000
                   |L10.256|
-                          DCD      ||.bss||+0x30
+                          DCD      0x40060000
                   |L10.260|
-000104  0d0a675f          DCB      "\r\ng_au8SlaveRxBuffer : \r\n",0
-000108  61753853
-00010c  6c617665
-000110  52784275
-000114  66666572
-000118  203a200d
-00011c  0a00    
-00011e  00                DCB      0
-00011f  00                DCB      0
-                  |L10.288|
-000120  30782532          DCB      "0x%2X,",0
-000124  582c00  
-000127  00                DCB      0
-                  |L10.296|
-000128  0d0a675f          DCB      "\r\ng_au8SlaveToMasterTestPattern : \r\n",0
-00012c  61753853
-000130  6c617665
-000134  546f4d61
-000138  73746572
-00013c  54657374
-000140  50617474
-000144  65726e20
-000148  3a200d0a
-00014c  00      
-00014d  00                DCB      0
-00014e  00                DCB      0
-00014f  00                DCB      0
-                  |L10.336|
-000150  0d0a00            DCB      "\r\n",0
+                          DCD      ||.bss||+0x30
+                  |L10.264|
+000108  0d0a675f          DCB      "\r\ng_au8SlaveRxBuffer : \r\n",0
+00010c  61753853
+000110  6c617665
+000114  52784275
+000118  66666572
+00011c  203a200d
+000120  0a00    
+000122  00                DCB      0
+000123  00                DCB      0
+                  |L10.292|
+000124  30782532          DCB      "0x%2X,",0
+000128  582c00  
+00012b  00                DCB      0
+                  |L10.300|
+00012c  0d0a675f          DCB      "\r\ng_au8SlaveToMasterTestPattern : \r\n",0
+000130  61753853
+000134  6c617665
+000138  546f4d61
+00013c  73746572
+000140  54657374
+000144  50617474
+000148  65726e20
+00014c  3a200d0a
+000150  00      
+000151  00                DCB      0
+000152  00                DCB      0
 000153  00                DCB      0
+                  |L10.340|
+000154  0d0a00            DCB      "\r\n",0
+000157  00                DCB      0
 
                           AREA ||i.QSPI_Slave_PDMA_PreInit||, CODE, READONLY, ALIGN=2
 
@@ -1104,8 +1117,8 @@
                           AREA ||i.SYS_Init||, CODE, READONLY, ALIGN=2
 
                   SYS_Init PROC
-;;;470    
-;;;471    void SYS_Init(void)
+;;;479    
+;;;480    void SYS_Init(void)
 000000  b570              PUSH     {r4-r6,lr}
 000002  2059              MOVS     r0,#0x59
 000004  0784              LSLS     r4,r0,#30
@@ -1118,113 +1131,113 @@
 000016  f8d43100          LDR      r3,[r4,#0x100]
 00001a  2b00              CMP      r3,#0
 00001c  d0f5              BEQ      |L12.10|
-;;;472    {
-;;;473        /*---------------------------------------------------------------------------------------------------------*/
-;;;474        /* Init System Clock                                                                                       */
-;;;475        /*---------------------------------------------------------------------------------------------------------*/
-;;;476        /* Unlock protected registers */
-;;;477        SYS_UnlockReg();
-;;;478    
-;;;479        /* Set XT1_OUT(PF.2) and XT1_IN(PF.3) to input mode */
-;;;480        PF->MODE &= ~(GPIO_MODE_MODE2_Msk | GPIO_MODE_MODE3_Msk);
+;;;481    {
+;;;482        /*---------------------------------------------------------------------------------------------------------*/
+;;;483        /* Init System Clock                                                                                       */
+;;;484        /*---------------------------------------------------------------------------------------------------------*/
+;;;485        /* Unlock protected registers */
+;;;486        SYS_UnlockReg();
+;;;487    
+;;;488        /* Set XT1_OUT(PF.2) and XT1_IN(PF.3) to input mode */
+;;;489        PF->MODE &= ~(GPIO_MODE_MODE2_Msk | GPIO_MODE_MODE3_Msk);
 00001e  f04f2540          MOV      r5,#0x40004000
 000022  f8d50140          LDR      r0,[r5,#0x140]
 000026  f02000f0          BIC      r0,r0,#0xf0
 00002a  f8c50140          STR      r0,[r5,#0x140]
-;;;481    
-;;;482        /* Enable External XTAL (4~24 MHz) */
-;;;483        CLK_EnableXtalRC(CLK_PWRCTL_HXTEN_Msk);
+;;;490    
+;;;491        /* Enable External XTAL (4~24 MHz) */
+;;;492        CLK_EnableXtalRC(CLK_PWRCTL_HXTEN_Msk);
 00002e  2001              MOVS     r0,#1
 000030  f7fffffe          BL       CLK_EnableXtalRC
-;;;484    
-;;;485        /* Waiting for 12MHz clock ready */
-;;;486        CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk);
+;;;493    
+;;;494        /* Waiting for 12MHz clock ready */
+;;;495        CLK_WaitClockReady(CLK_STATUS_HXTSTB_Msk);
 000034  2001              MOVS     r0,#1
 000036  f7fffffe          BL       CLK_WaitClockReady
-;;;487    
-;;;488        /* Set core clock as PLL_CLOCK from PLL */
-;;;489        CLK_SetCoreClock(FREQ_192MHZ);
+;;;496    
+;;;497        /* Set core clock as PLL_CLOCK from PLL */
+;;;498        CLK_SetCoreClock(FREQ_192MHZ);
 00003a  481c              LDR      r0,|L12.172|
 00003c  f7fffffe          BL       CLK_SetCoreClock
-;;;490        /* Set PCLK0/PCLK1 to HCLK/2 */
-;;;491        CLK->PCLKDIV = (CLK_PCLKDIV_APB0DIV_DIV2 | CLK_PCLKDIV_APB1DIV_DIV2);
+;;;499        /* Set PCLK0/PCLK1 to HCLK/2 */
+;;;500        CLK->PCLKDIV = (CLK_PCLKDIV_APB0DIV_DIV2 | CLK_PCLKDIV_APB1DIV_DIV2);
 000040  2011              MOVS     r0,#0x11
 000042  f8c40234          STR      r0,[r4,#0x234]
-;;;492    
-;;;493        /* Enable UART clock */
-;;;494        CLK_EnableModuleClock(UART0_MODULE);
+;;;501    
+;;;502        /* Enable UART clock */
+;;;503        CLK_EnableModuleClock(UART0_MODULE);
 000046  4e1a              LDR      r6,|L12.176|
 000048  4630              MOV      r0,r6
 00004a  f7fffffe          BL       CLK_EnableModuleClock
-;;;495    
-;;;496        /* Select UART clock source from HXT */
-;;;497        CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UART0SEL_HXT, CLK_CLKDIV0_UART0(1));
+;;;504    
+;;;505        /* Select UART clock source from HXT */
+;;;506        CLK_SetModuleClock(UART0_MODULE, CLK_CLKSEL1_UART0SEL_HXT, CLK_CLKDIV0_UART0(1));
 00004e  2200              MOVS     r2,#0
 000050  4611              MOV      r1,r2
 000052  4630              MOV      r0,r6
 000054  f7fffffe          BL       CLK_SetModuleClock
-;;;498    
-;;;499        CLK_SetModuleClock(QSPI0_MODULE, CLK_CLKSEL2_QSPI0SEL_PCLK0, MODULE_NoMsk);
+;;;507    
+;;;508        CLK_SetModuleClock(QSPI0_MODULE, CLK_CLKSEL2_QSPI0SEL_PCLK0, MODULE_NoMsk);
 000058  4e16              LDR      r6,|L12.180|
 00005a  2200              MOVS     r2,#0
 00005c  2108              MOVS     r1,#8
 00005e  4630              MOV      r0,r6
 000060  f7fffffe          BL       CLK_SetModuleClock
-;;;500        CLK_EnableModuleClock(QSPI0_MODULE);
+;;;509        CLK_EnableModuleClock(QSPI0_MODULE);
 000064  4630              MOV      r0,r6
 000066  f7fffffe          BL       CLK_EnableModuleClock
-;;;501    
-;;;502        CLK_EnableModuleClock(PDMA_MODULE);
+;;;510    
+;;;511        CLK_EnableModuleClock(PDMA_MODULE);
 00006a  2001              MOVS     r0,#1
 00006c  f7fffffe          BL       CLK_EnableModuleClock
-;;;503    
-;;;504    //	TIMER0_HW_Init();
-;;;505    	TIMER1_HW_Init();
+;;;512    
+;;;513    //	TIMER0_HW_Init();
+;;;514    	TIMER1_HW_Init();
 000070  f7fffffe          BL       TIMER1_HW_Init
-;;;506    	
-;;;507        /* Update System Core Clock */
-;;;508        /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock. */
-;;;509        SystemCoreClockUpdate();
+;;;515    	
+;;;516        /* Update System Core Clock */
+;;;517        /* User can use SystemCoreClockUpdate() to calculate SystemCoreClock. */
+;;;518        SystemCoreClockUpdate();
 000074  f7fffffe          BL       SystemCoreClockUpdate
-;;;510    
-;;;511        /* Set GPB multi-function pins for UART0 RXD and TXD */
-;;;512        SYS->GPB_MFPH &= ~(SYS_GPB_MFPH_PB12MFP_Msk | SYS_GPB_MFPH_PB13MFP_Msk);
+;;;519    
+;;;520        /* Set GPB multi-function pins for UART0 RXD and TXD */
+;;;521        SYS->GPB_MFPH &= ~(SYS_GPB_MFPH_PB12MFP_Msk | SYS_GPB_MFPH_PB13MFP_Msk);
 000078  6be0              LDR      r0,[r4,#0x3c]
 00007a  f420007f          BIC      r0,r0,#0xff0000
 00007e  63e0              STR      r0,[r4,#0x3c]
-;;;513        SYS->GPB_MFPH |= (SYS_GPB_MFPH_PB12MFP_UART0_RXD | SYS_GPB_MFPH_PB13MFP_UART0_TXD);
+;;;522        SYS->GPB_MFPH |= (SYS_GPB_MFPH_PB12MFP_UART0_RXD | SYS_GPB_MFPH_PB13MFP_UART0_TXD);
 000080  6be0              LDR      r0,[r4,#0x3c]
 000082  f44000cc          ORR      r0,r0,#0x660000
 000086  63e0              STR      r0,[r4,#0x3c]
-;;;514    
-;;;515        /* Setup QSPI0 multi-function pins */
-;;;516        SYS->GPA_MFPL |= SYS_GPA_MFPL_PA0MFP_QSPI0_MOSI0 | SYS_GPA_MFPL_PA1MFP_QSPI0_MISO0 | SYS_GPA_MFPL_PA2MFP_QSPI0_CLK | SYS_GPA_MFPL_PA3MFP_QSPI0_SS |
+;;;523    
+;;;524        /* Setup QSPI0 multi-function pins */
+;;;525        SYS->GPA_MFPL |= SYS_GPA_MFPL_PA0MFP_QSPI0_MOSI0 | SYS_GPA_MFPL_PA1MFP_QSPI0_MISO0 | SYS_GPA_MFPL_PA2MFP_QSPI0_CLK | SYS_GPA_MFPL_PA3MFP_QSPI0_SS |
 000088  6b20              LDR      r0,[r4,#0x30]
 00008a  490b              LDR      r1,|L12.184|
 00008c  4308              ORRS     r0,r0,r1
 00008e  6320              STR      r0,[r4,#0x30]
-;;;517                         SYS_GPA_MFPL_PA4MFP_QSPI0_MOSI1 | SYS_GPA_MFPL_PA5MFP_QSPI0_MISO1;
-;;;518    
-;;;519        /* Enable QSPI0 clock pin (PA2) schmitt trigger */
-;;;520        PA->SMTEN |= GPIO_SMTEN_SMTEN2_Msk;
+;;;526                         SYS_GPA_MFPL_PA4MFP_QSPI0_MOSI1 | SYS_GPA_MFPL_PA5MFP_QSPI0_MISO1;
+;;;527    
+;;;528        /* Enable QSPI0 clock pin (PA2) schmitt trigger */
+;;;529        PA->SMTEN |= GPIO_SMTEN_SMTEN2_Msk;
 000090  6a68              LDR      r0,[r5,#0x24]
 000092  f0400004          ORR      r0,r0,#4
 000096  6268              STR      r0,[r5,#0x24]
-;;;521    
-;;;522        /* Enable QSPI0 I/O high slew rate */
-;;;523        GPIO_SetSlewCtl(PA, 0x3F, GPIO_SLEWCTL_HIGH);
+;;;530    
+;;;531        /* Enable QSPI0 I/O high slew rate */
+;;;532        GPIO_SetSlewCtl(PA, 0x3F, GPIO_SLEWCTL_HIGH);
 000098  2201              MOVS     r2,#1
 00009a  213f              MOVS     r1,#0x3f
 00009c  4628              MOV      r0,r5
 00009e  f7fffffe          BL       GPIO_SetSlewCtl
 0000a2  2000              MOVS     r0,#0
 0000a4  f8c40100          STR      r0,[r4,#0x100]
-;;;524    	
-;;;525        /* Lock protected registers */
-;;;526        SYS_LockReg();
-;;;527    }
+;;;533    	
+;;;534        /* Lock protected registers */
+;;;535        SYS_LockReg();
+;;;536    }
 0000a8  bd70              POP      {r4-r6,pc}
-;;;528    
+;;;537    
                           ENDP
 
 0000aa  0000              DCW      0x0000
@@ -1240,22 +1253,22 @@
                           AREA ||i.TIMER0_HW_Init||, CODE, READONLY, ALIGN=2
 
                   TIMER0_HW_Init PROC
-;;;451    
-;;;452    void TIMER0_HW_Init(void)
+;;;460    
+;;;461    void TIMER0_HW_Init(void)
 000000  b510              PUSH     {r4,lr}
-;;;453    {
-;;;454    	CLK_EnableModuleClock(TMR0_MODULE);
+;;;462    {
+;;;463    	CLK_EnableModuleClock(TMR0_MODULE);
 000002  4c06              LDR      r4,|L13.28|
 000004  4620              MOV      r0,r4
 000006  f7fffffe          BL       CLK_EnableModuleClock
-;;;455    	CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_PCLK0, 0);
+;;;464    	CLK_SetModuleClock(TMR0_MODULE, CLK_CLKSEL1_TMR0SEL_PCLK0, 0);
 00000a  4620              MOV      r0,r4
 00000c  e8bd4010          POP      {r4,lr}
 000010  2200              MOVS     r2,#0
 000012  f44f7100          MOV      r1,#0x200
 000016  f7ffbffe          B.W      CLK_SetModuleClock
-;;;456    }
-;;;457    
+;;;465    }
+;;;466    
                           ENDP
 
 00001a  0000              DCW      0x0000
@@ -1265,15 +1278,15 @@
                           AREA ||i.TIMER0_Polling||, CODE, READONLY, ALIGN=2
 
                   TIMER0_Polling PROC
-;;;457    
-;;;458    void TIMER0_Polling(uint32_t u32Usec)
+;;;466    
+;;;467    void TIMER0_Polling(uint32_t u32Usec)
 000000  4601              MOV      r1,r0
-;;;459    {
-;;;460    	TIMER_Delay(TIMER0, u32Usec);
+;;;468    {
+;;;469    	TIMER_Delay(TIMER0, u32Usec);
 000002  4801              LDR      r0,|L14.8|
 000004  f7ffbffe          B.W      TIMER_Delay
-;;;461    }
-;;;462    
+;;;470    }
+;;;471    
                           ENDP
 
                   |L14.8|
@@ -1282,22 +1295,22 @@
                           AREA ||i.TIMER1_HW_Init||, CODE, READONLY, ALIGN=2
 
                   TIMER1_HW_Init PROC
-;;;437    
-;;;438    void TIMER1_HW_Init(void)
+;;;446    
+;;;447    void TIMER1_HW_Init(void)
 000000  b510              PUSH     {r4,lr}
-;;;439    {
-;;;440        CLK_EnableModuleClock(TMR1_MODULE);
+;;;448    {
+;;;449        CLK_EnableModuleClock(TMR1_MODULE);
 000002  4c06              LDR      r4,|L15.28|
 000004  4620              MOV      r0,r4
 000006  f7fffffe          BL       CLK_EnableModuleClock
-;;;441        CLK_SetModuleClock(TMR1_MODULE, CLK_CLKSEL1_TMR1SEL_HIRC, 0);
+;;;450        CLK_SetModuleClock(TMR1_MODULE, CLK_CLKSEL1_TMR1SEL_HIRC, 0);
 00000a  4620              MOV      r0,r4
 00000c  e8bd4010          POP      {r4,lr}
 000010  2200              MOVS     r2,#0
 000012  f44f41e0          MOV      r1,#0x7000
 000016  f7ffbffe          B.W      CLK_SetModuleClock
-;;;442    }
-;;;443    
+;;;451    }
+;;;452    
                           ENDP
 
 00001a  0000              DCW      0x0000
@@ -1307,11 +1320,11 @@
                           AREA ||i.TIMER1_Init||, CODE, READONLY, ALIGN=2
 
                   TIMER1_Init PROC
-;;;443    
-;;;444    void TIMER1_Init(void)
+;;;452    
+;;;453    void TIMER1_Init(void)
 000000  b510              PUSH     {r4,lr}
-;;;445    {
-;;;446        TIMER_Open(TIMER1, TIMER_PERIODIC_MODE, 1000);
+;;;454    {
+;;;455        TIMER_Open(TIMER1, TIMER_PERIODIC_MODE, 1000);
 000002  4c0a              LDR      r4,|L16.44|
 000004  f44f727a          MOV      r2,#0x3e8
 000008  f04f6100          MOV      r1,#0x8000000
@@ -1320,17 +1333,17 @@
 000012  6820              LDR      r0,[r4,#0]
 000014  f0405000          ORR      r0,r0,#0x20000000
 000018  6020              STR      r0,[r4,#0]
-;;;447        TIMER_EnableInt(TIMER1);
-;;;448        NVIC_EnableIRQ(TMR1_IRQn);	
+;;;456        TIMER_EnableInt(TIMER1);
+;;;457        NVIC_EnableIRQ(TMR1_IRQn);	
 00001a  2021              MOVS     r0,#0x21
 00001c  f7fffffe          BL       NVIC_EnableIRQ
 000020  6820              LDR      r0,[r4,#0]
 000022  f0404080          ORR      r0,r0,#0x40000000
 000026  6020              STR      r0,[r4,#0]
-;;;449        TIMER_Start(TIMER1);
-;;;450    }
+;;;458        TIMER_Start(TIMER1);
+;;;459    }
 000028  bd10              POP      {r4,pc}
-;;;451    
+;;;460    
                           ENDP
 
 00002a  0000              DCW      0x0000
@@ -1347,53 +1360,53 @@
                           REQUIRE _printf_int_dec
                           REQUIRE _printf_str
                   TMR1_IRQHandler PROC
-;;;419    
-;;;420    void TMR1_IRQHandler(void)
+;;;428    
+;;;429    void TMR1_IRQHandler(void)
 000000  b510              PUSH     {r4,lr}
 000002  480f              LDR      r0,|L17.64|
 000004  6881              LDR      r1,[r0,#8]
 000006  f3c10100          UBFX     r1,r1,#0,#1
-;;;421    {
+;;;430    {
 00000a  2900              CMP      r1,#0
 00000c  d016              BEQ      |L17.60|
 00000e  2101              MOVS     r1,#1
 000010  6081              STR      r1,[r0,#8]
-;;;422    	static uint16_t CNT = 0;	
-;;;423    	static uint32_t log = 0;	
-;;;424    	
-;;;425        if(TIMER_GetIntFlag(TIMER1) == 1)
-;;;426        {
-;;;427            TIMER_ClearIntFlag(TIMER1);
-;;;428    	
-;;;429    		if (CNT++ > 1000)
+;;;431    	static uint16_t CNT = 0;	
+;;;432    	static uint32_t log = 0;	
+;;;433    	
+;;;434        if(TIMER_GetIntFlag(TIMER1) == 1)
+;;;435        {
+;;;436            TIMER_ClearIntFlag(TIMER1);
+;;;437    	
+;;;438    		if (CNT++ > 1000)
 000012  490c              LDR      r1,|L17.68|
 000014  8848              LDRH     r0,[r1,#2]  ; CNT
 000016  1c42              ADDS     r2,r0,#1
 000018  804a              STRH     r2,[r1,#2]
 00001a  f5b07f7a          CMP      r0,#0x3e8
 00001e  d90d              BLS      |L17.60|
-;;;430    		{		
-;;;431    			CNT = 0;
+;;;439    		{		
+;;;440    			CNT = 0;
 000020  2000              MOVS     r0,#0
 000022  8048              STRH     r0,[r1,#2]
-;;;432    			printf("%s : %2d\r\n" , __FUNCTION__ , log++);
+;;;441    			printf("%s : %2d\r\n" , __FUNCTION__ , log++);
 000024  684a              LDR      r2,[r1,#4]  ; log
 000026  1c50              ADDS     r0,r2,#1
 000028  6048              STR      r0,[r1,#4]  ; log
 00002a  4907              LDR      r1,|L17.72|
 00002c  a007              ADR      r0,|L17.76|
 00002e  f7fffffe          BL       __2printf
-;;;433    			LED_R ^= 1;
+;;;442    			LED_R ^= 1;
 000032  4809              LDR      r0,|L17.88|
 000034  6801              LDR      r1,[r0,#0]
 000036  f0810101          EOR      r1,r1,#1
 00003a  6001              STR      r1,[r0,#0]
                   |L17.60|
-;;;434    		}
-;;;435        }
-;;;436    }
+;;;443    		}
+;;;444        }
+;;;445    }
 00003c  bd10              POP      {r4,pc}
-;;;437    
+;;;446    
                           ENDP
 
 00003e  0000              DCW      0x0000
@@ -1419,75 +1432,75 @@
                           REQUIRE _printf_d
                           REQUIRE _printf_int_dec
                   main PROC
-;;;536    
-;;;537    int main()
+;;;545    
+;;;546    int main()
 000000  f7fffffe          BL       SYS_Init
-;;;538    {
-;;;539    	
-;;;540        SYS_Init();
-;;;541        /* Init UART to 115200-8n1 for print message */
-;;;542        UART_Open(UART0, 115200);
+;;;547    {
+;;;548    	
+;;;549        SYS_Init();
+;;;550        /* Init UART to 115200-8n1 for print message */
+;;;551        UART_Open(UART0, 115200);
 000004  f44f31e1          MOV      r1,#0x1c200
 000008  4814              LDR      r0,|L18.92|
 00000a  f7fffffe          BL       UART_Open
-;;;543    
-;;;544    	printf("\r\nCLK_GetCPUFreq : %8d\r\n",CLK_GetCPUFreq());
+;;;552    
+;;;553    	printf("\r\nCLK_GetCPUFreq : %8d\r\n",CLK_GetCPUFreq());
 00000e  f7fffffe          BL       CLK_GetCPUFreq
 000012  4601              MOV      r1,r0
 000014  a012              ADR      r0,|L18.96|
 000016  f7fffffe          BL       __2printf
-;;;545    	printf("CLK_GetHXTFreq : %8d\r\n",CLK_GetHXTFreq());
+;;;554    	printf("CLK_GetHXTFreq : %8d\r\n",CLK_GetHXTFreq());
 00001a  f7fffffe          BL       CLK_GetHXTFreq
 00001e  4601              MOV      r1,r0
 000020  a016              ADR      r0,|L18.124|
 000022  f7fffffe          BL       __2printf
-;;;546    	printf("CLK_GetLXTFreq : %8d\r\n",CLK_GetLXTFreq());	
+;;;555    	printf("CLK_GetLXTFreq : %8d\r\n",CLK_GetLXTFreq());	
 000026  f7fffffe          BL       CLK_GetLXTFreq
 00002a  4601              MOV      r1,r0
 00002c  a019              ADR      r0,|L18.148|
 00002e  f7fffffe          BL       __2printf
-;;;547    	printf("CLK_GetPCLK0Freq : %8d\r\n",CLK_GetPCLK0Freq());
+;;;556    	printf("CLK_GetPCLK0Freq : %8d\r\n",CLK_GetPCLK0Freq());
 000032  f7fffffe          BL       CLK_GetPCLK0Freq
 000036  4601              MOV      r1,r0
 000038  a01c              ADR      r0,|L18.172|
 00003a  f7fffffe          BL       __2printf
-;;;548    	printf("CLK_GetPCLK1Freq : %8d\r\n",CLK_GetPCLK1Freq());
+;;;557    	printf("CLK_GetPCLK1Freq : %8d\r\n",CLK_GetPCLK1Freq());
 00003e  f7fffffe          BL       CLK_GetPCLK1Freq
 000042  4601              MOV      r1,r0
 000044  a020              ADR      r0,|L18.200|
 000046  f7fffffe          BL       __2printf
-;;;549    
-;;;550    	LED_Init();
+;;;558    
+;;;559    	LED_Init();
 00004a  f7fffffe          BL       LED_Init
-;;;551    	TIMER1_Init();
+;;;560    	TIMER1_Init();
 00004e  f7fffffe          BL       TIMER1_Init
-;;;552    
-;;;553    	#if defined (ENABLE_QSPI_MASTER)
-;;;554    	
-;;;555    	QSPI_Master_Init();
+;;;561    
+;;;562    	#if defined (ENABLE_QSPI_MASTER)
+;;;563    	
+;;;564    	QSPI_Master_Init();
 000052  f7fffffe          BL       QSPI_Master_Init
-;;;556    	QSPI_Master_PDMA_PreInit();
+;;;565    	QSPI_Master_PDMA_PreInit();
 000056  f7fffffe          BL       QSPI_Master_PDMA_PreInit
                   |L18.90|
-;;;557    	
-;;;558    	#elif defined (ENABLE_QSPI_SLAVE)
-;;;559    	
-;;;560    	QSPI_Slave_Init();
-;;;561    	QSPI_Slave_PDMA_PreInit();
-;;;562    
-;;;563    	#endif
-;;;564    
-;;;565        /* Got no where to go, just loop forever */
-;;;566        while(1)
+;;;566    	
+;;;567    	#elif defined (ENABLE_QSPI_SLAVE)
+;;;568    	
+;;;569    	QSPI_Slave_Init();
+;;;570    	QSPI_Slave_PDMA_PreInit();
+;;;571    
+;;;572    	#endif
+;;;573    
+;;;574        /* Got no where to go, just loop forever */
+;;;575        while(1)
 00005a  e7fe              B        |L18.90|
-;;;567        {
-;;;568    //		TIMER0_Polling(100);
-;;;569    		
-;;;570    
-;;;571        }
-;;;572    
-;;;573    }
-;;;574    
+;;;576        {
+;;;577    //		TIMER0_Polling(100);
+;;;578    		
+;;;579    
+;;;580        }
+;;;581    
+;;;582    }
+;;;583    
                           ENDP
 
                   |L18.92|
@@ -1563,8 +1576,8 @@
 
                           AREA ||.data||, DATA, ALIGN=2
 
-                  j
-000000  0000              DCW      0x0000
+                  k
+000000  1000              DCB      0x10,0x00
                   ||CNT||
 000002  0000              DCW      0x0000
                   log

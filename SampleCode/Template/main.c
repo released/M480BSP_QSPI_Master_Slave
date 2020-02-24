@@ -20,7 +20,7 @@
 #define QSPI_SLAVE_RX_DMA_CH  			(3)
 #define QSPI_SLAVE_OPENED_CH   			((1 << QSPI_SLAVE_TX_DMA_CH) | (1 << QSPI_SLAVE_RX_DMA_CH))
 
-#define QSPI_TARGET_FREQ				(1000000ul)	//(48000000ul)
+#define QSPI_TARGET_FREQ				(100000ul)	//(48000000ul)
 
 #define DATA_NUM						(16)
 
@@ -117,11 +117,16 @@ void QSPI_Slave_PDMA_Enable(uint8_t TxRx)
 
 			g_au8SlaveToMasterTestPattern[INDEX_HEAD] = DATA_HEAD_SLAVE;
 			g_au8SlaveToMasterTestPattern[INDEX_TAIL] = DATA_TAIL_SLAVE;
-		
+
 		    for (i = (INDEX_HEAD+1); i < INDEX_TAIL; i++)
 		    {
-		        g_au8SlaveToMasterTestPattern[i] = i;
+		        g_au8SlaveToMasterTestPattern[INDEX_TAIL-i] = g_au8SlaveRxBuffer[i];
 		    }
+			
+//		    for (i = (INDEX_HEAD+1); i < INDEX_TAIL; i++)
+//		    {
+//		        g_au8SlaveToMasterTestPattern[i] = i;
+//		    }
 		}
 
 		#if 1	//TX debug
@@ -241,7 +246,7 @@ void QSPI_Master_PDMA_PreInit(void)
 void QSPI_Master_PDMA_Enable(uint8_t TxRx)
 {
     uint16_t i = 0;
-    static uint16_t j = 0;
+    static uint8_t k = 0x10;
 	
 	if (TxRx == QSPI_TX)
 	{
@@ -251,12 +256,16 @@ void QSPI_Master_PDMA_Enable(uint8_t TxRx)
 		g_au8MasterToSlaveTestPattern[INDEX_HEAD] = DATA_HEAD_MASTER;
 		g_au8MasterToSlaveTestPattern[INDEX_TAIL] = DATA_TAIL_MASTER;
 
-		j = 1;
 	    for (i = (INDEX_HEAD+1); i < INDEX_TAIL ; i++)
 	    {
-	        g_au8MasterToSlaveTestPattern[i] = (i + 0x10*(j++));
+	        g_au8MasterToSlaveTestPattern[i] = (i + k);
 	    }
-		j = 0;
+
+		k += 0x10;
+		if (k >= 0xFF)
+		{
+			k = 0x10;
+		}
 
 		#if 1	//TX debug
 		printf("\r\ng_au8MasterToSlaveTestPattern : \r\n");
